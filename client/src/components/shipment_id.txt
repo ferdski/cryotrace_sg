@@ -1,0 +1,202 @@
+INSERT INTO Shipments (
+    container_id, ship_date, receive_date,
+    origin, destination, ship_weight, receive_weight
+)
+SELECT
+    ship.container_id,
+    ship.timestamp AS ship_date,
+    recv.timestamp AS receive_date,
+    ship.location AS origin,
+    recv.location AS destination,
+    ship.weight AS ship_weight,
+    recv.weight AS receive_weight
+FROM Shipment_Records ship
+JOIN Shipment_Records recv
+  ON ship.container_id = recv.container_id
+  AND ship.transit = 'ship'
+  AND recv.transit = 'receive'
+  AND recv.timestamp > ship.timestamp
+WHERE NOT EXISTS (
+  SELECT 1 FROM Shipments s
+  WHERE s.container_id = ship.container_id
+    AND s.ship_date = ship.timestamp
+    AND s.receive_date = recv.timestamp
+)
+ORDER BY ship.timestamp;
+
+
+// Given an array of records (sorted by timestamp)
+function pairShipments(records) {
+  const shipments = [];
+  for (let i = 0; i < records.length - 1; i++) {
+    const ship = records[i];
+    const recv = records[i + 1];
+    if (ship.transit === 'ship' && recv.transit === 'receive') {
+      shipments.push({
+        container_id: ship.container_id,
+        ship_date: ship.timestamp,
+        receive_date: recv.timestamp,
+        origin: ship.location,
+        destination: recv.location,
+        ship_weight: ship.weight,
+        receive_weight: recv.weight
+      });
+      i++; // Skip the next one since it's used
+    }
+  }
+  return shipments;
+}
+
+
+CREATE TABLE Shipments (
+    shipment_id VARCHAR(100) PRIMARY KEY,
+    container_id VARCHAR(50) NOT NULL,
+    ship_date TIMESTAMP,
+    receive_date TIMESTAMP,
+    origin VARCHAR(255),
+    destination VARCHAR(255),
+    ship_weight DECIMAL(5,2),
+    receive_weight DECIMAL(5,2),
+    evap_rate FLOAT(3.2),
+    FOREIGN KEY (container_id) REFERENCES Containers(container_id)
+);
+
+
+Here’s how to generate and insert that shipment_id into your Shipments table:
+
+INSERT INTO Shipments (
+    shipment_id, container_id, ship_date, receive_date,
+    origin, destination, ship_weight, receive_weight
+)
+SELECT
+    CONCAT(ship.container_id, '_', DATE_FORMAT(ship.timestamp, '%Y%m%d%H%i%S')) AS shipment_id,
+    ship.container_id,
+    ship.timestamp AS ship_date,
+    recv.timestamp AS receive_date,
+    ship.location AS origin,
+    recv.location AS destination,
+    ship.weight AS ship_weight,
+    recv.weight AS receive_weight
+FROM Shipment_Records ship
+JOIN Shipment_Records recv
+  ON ship.container_id = recv.container_id
+  AND ship.transit = 'ship'
+  AND recv.transit = 'receive'
+  AND recv.timestamp > ship.timestamp
+WHERE NOT EXISTS (
+  SELECT 1 FROM Shipments s
+  WHERE s.shipment_id = CONCAT(ship.container_id, '_', DATE_FORMAT(ship.timestamp, '%Y%m%d%H%i%S'))
+)
+ORDER BY ship.timestamp;
+
+
+
+SELECT
+    CONCAT(ship.container_id, '_', DATE_FORMAT(ship.timestamp, '%Y%m%d%H%i%S')) AS shipment_id,
+    ship.container_id,
+    ship.timestamp AS ship_date,
+    recv.timestamp AS receive_date,
+    ship.location AS origin,
+    recv.location AS destination,
+    ship.weight AS ship_weight,
+    recv.weight AS receive_weight
+FROM Shipment_Records ship
+JOIN Shipment_Records recv
+  ON ship.container_id = recv.container_id
+  AND ship.transit = 'ship'
+  AND recv.transit = 'receive'
+  AND recv.timestamp = (
+    SELECT MIN(r2.timestamp)
+    FROM Shipment_Records r2
+    WHERE r2.container_id = ship.container_id
+      AND r2.transit = 'receive'
+      AND r2.timestamp > ship.timestamp
+  )
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM Shipments s
+  WHERE s.shipment_id = CONCAT(ship.container_id, '_', DATE_FORMAT(ship.timestamp, '%Y%m%d%H%i%S'))
+)
+ORDER BY ship.timestamp;
+
+
+
+
+Example SQL:
+Insert Ship Event into Shipment_Records:
+
+INSERT INTO Shipment_Records (container_id, location, transit, weight, user_id)
+VALUES ('C12345', 'Location A', 'ship', 100.5, 1);
+
+Insert Receive Event into Shipment_Records:
+
+INSERT INTO Shipment_Records (container_id, location, transit, weight, user_id)
+VALUES ('C12345', 'Location B', 'receive', 95.3, 1);
+
+Calculate and Update evap_rate in Shipments:
+
+After the "ship" and "receive" events have been inserted, you can update the Shipments table to calculate evap_rate. Here’s an SQL query that does this:
+
+UPDATE Shipments s
+JOIN (
+    SELECT container_id, 
+           MAX(CASE WHEN transit = 'ship' THEN weight END) AS ship_weight,
+           MAX(CASE WHEN transit = 'receive' THEN weight END) AS receive_weight
+    FROM Shipment_Records
+    WHERE container_id = 'C12345'
+    GROUP BY container_id
+) r ON s.container_id = r.container_id
+SET s.ship_weight = r.ship_weight,
+    s.receive_weight = r.receive_weight,
+    s.evap_rate = (r.ship_weight - r.receive_weight);
+
+Points to Note:
+
+    The MAX and CASE functions are used to get the weights for the ship and receive events. This assumes there will only be one ship and one receive record for each container_id per shipment.
+
+    The evap_rate is calculated as the difference between ship_weight and receive_weight.
+
+
+
+
+
+
+Alternative Method: Triggers
+If you prefer, you can automate this process using triggers to calculate and update the evap_rate when the Shipment_Records table is updated. Here’s an example of how you can create a trigger to automatically update the evap_rate when a new record is inserted:
+
+DELIMITER $$
+
+CREATE TRIGGER after_shipment_record_insert
+AFTER INSERT ON Shipment_Records
+FOR EACH ROW
+BEGIN
+    IF NEW.transit = 'receive' THEN
+        -- Calculate evap_rate only after the receive record is inserted
+        UPDATE Shipments s
+        JOIN (
+            SELECT container_id, 
+                   MAX(CASE WHEN transit = 'ship' THEN weight END) AS ship_weight,
+                   MAX(CASE WHEN transit = 'receive' THEN weight END) AS receive_weight
+            FROM Shipment_Records
+            WHERE container_id = NEW.container_id
+            GROUP BY container_id
+        ) r ON s.container_id = r.container_id
+        SET s.ship_weight = r.ship_weight,
+            s.receive_weight = r.receive_weight,
+            s.evap_rate = (r.ship_weight - r.receive_weight)
+        WHERE s.container_id = NEW.container_id;
+    END IF;
+END $$
+
+DELIMITER ;
+
+This trigger ensures that the evap_rate is automatically calculated and updated when a "receive" record is inserted into Shipment_Records.
+
+In summary:
+
+    You should calculate the evap_rate after the "receive" event is inserted, as it depends on both the "ship" and "receive" weights.
+
+    You can either do this manually via UPDATE queries or automate the process using triggers.
+
+
+ChatGPT can make mistakes. Check important info.

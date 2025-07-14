@@ -1,0 +1,25 @@
+// Constants
+const HEAT_OF_VAPORIZATION = 1.992e5; // J/kg
+const DENSITY_LN2 = 808; // kg/m^3
+const CUBIC_METERS_TO_LITERS = 1000; // L/m^3
+
+// Example weights from database (in kilograms)
+const startWeight = 12.5;
+const endWeight = 11.5;
+
+// Calculate weight loss
+const weightLoss = startWeight - endWeight;
+
+// Calculate energy required to vaporize the lost LN2
+const energyRequired = weightLoss * HEAT_OF_VAPORIZATION; // in Joules
+
+// Calculate volume of LN2 evaporated (in m³)
+const volumeEvaporated_m3 = weightLoss / DENSITY_LN2;
+
+// Convert volume to liters
+const volumeEvaporated_L = volumeEvaporated_m3 * CUBIC_METERS_TO_LITERS;
+
+// Output results
+console.log(`Weight loss: ${weightLoss.toFixed(3)} kg`);
+console.log(`Energy required to vaporize: ${energyRequired.toExponential(3)} J`);
+console.log(`Volume evaporated: ${volumeEvaporated_L.toFixed(3)} liters`);

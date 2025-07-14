@@ -1,0 +1,40 @@
+.users-list {
+  max-width: 600px;
+  margin: 2rem 0 2rem 2rem;  /* top right bottom left */
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+.users-list li {
+  background: #f9f9f9;
+  margin: 0.5rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;  /* Push items to opposite ends */
+  align-items: center;
+  transition: background 0.2s;
+}
+
+
+.users-list li:hover {
+  background: #eef;
+}
+
+.users-list li .username {
+  color: #222;
+  font-weight: bold;
+}
+
+.users-list li .role {
+  color: #555;
+  font-style: italic;
+  white-space: nowrap;  /* Prevent role from wrapping */
+}
+
+.users-list h2 {
+  text-align: left;  /* Title aligned left too */
+  font-family: sans-serif;
+  color: #333;
+  margin-bottom: 1rem;
+}
