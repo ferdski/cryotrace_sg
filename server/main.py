@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_connection
+from pydantic import BaseModel
+from chroma_rag import query_gpt_with_rag
+import os
 
 app = FastAPI()
 
@@ -12,6 +15,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class AskRequest(BaseModel):
+    query: str
+
+@app.post("/api/ask")
+async def ask(request: AskRequest):
+    try:
+        print(f"🔍 Received query: {request.query}")
+        answer = query_gpt_with_rag(request.query)
+        print(f"✅ RAG response: {answer}")
+        return {"answer": answer}
+    except Exception as e:
+        print("❌ Error in /api/ask:", repr(e))
+        return {"error": str(e)}
 
 @app.get("/api/users")
 def get_containers():
