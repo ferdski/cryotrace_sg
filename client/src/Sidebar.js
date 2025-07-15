@@ -7,7 +7,7 @@ function Sidebar() {
 <ul className="sidebar">
   <h1>Menu</h1>
   <li><Link to="/users">Users</Link></li>
-  <li><Link to="/containers">Containers</Link></li>
+  <li><Link to="/containers">List of Shipper units</Link></li>
   <li>
     <span>Records</span>
     <ul className="submenu">

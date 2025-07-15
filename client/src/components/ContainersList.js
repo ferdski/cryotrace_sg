@@ -26,26 +26,30 @@ useEffect(() => {
 
   return (
     <div className="containers-list">
-      <h2>Containers</h2>
+      <h2>Select Gases Shippers</h2>
       <table>
         <thead>
           <tr>
             <th>ID</th>
+            <th>Model</th>
             <th>Type</th>
             <th>Shape</th>
             <th>Dimensions</th>
-            <th>Max Capacity (kg)</th>
+            <th>Base Weight  (kg)</th>
+            <th>Max Capacity (kg)</th>         
             <th>Manufactured</th>
             <th>Other Specs</th>
           </tr>
         </thead>
         <tbody>
           {containers.map(container => (
-            <tr key={container.container_id}>
-              <td>{container.container_id}</td>
+            <tr key={container.shipper_id}>
+              <td>{container.shipper_id}</td>
+              <td>{container.model}</td>
               <td>{container.type}</td>
               <td>{container.shape}</td>
               <td>{container.dimensions}</td>
+              <td>{container.base_weight}</td>              
               <td>{parseFloat(container.max_capacity).toFixed(1)}</td>
               <td>{new Date(container.manufacture_date).toLocaleDateString()}</td>
               <td>{container.other_specs}</td>
