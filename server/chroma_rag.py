@@ -41,6 +41,7 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
 # --- Load and index shipment records from MySQL ---
 def load_or_index_shipments():
     if collection.count() > 0:
+        print("🔄 Collection already indexed.")
         return  # Skip if already populated
 
     # Connect to MySQL
@@ -59,28 +60,43 @@ def load_or_index_shipments():
     texts, metadatas, ids = [], [], []
 
     for i, row in enumerate(rows):
-        text = (
-            f"On {str(row.get('timestamp', ''))}, container {row['container_id']} was in {row['location']} "
-            f"for a {row['transit']} event. Weight: {row['weight']} kg. "
-            f"Condition: {row.get('condition', 'unknown condition')}."
-        )
-        texts.append(text)
+        transit = row.get("transit", "").lower()
+        direction = "received at" if transit == "receive" else "shipped from"
         timestamp = row.get("timestamp", "")
         if not isinstance(timestamp, str):
             timestamp = str(timestamp)
+
+        # ✅ Construct a semantically rich sentence
+        text = (
+            f"On {timestamp}, container {row['container_id']} was {direction} {row['location']} by user {row.get('user_id', 'unknown')}. "
+            f"It weighed {row.get('weight', '?')} kg. Condition noted: {row.get('condition', 'unknown condition')}."
+        )
+        texts.append(text)
+
+        # ✅ Clean metadata (all serializable)
         metadatas.append({
             "timestamp": timestamp,
             "container_id": row.get("container_id", ""),
             "location": row.get("location", ""),
-            "transit": row.get("transit", ""),
+            "transit": transit,
             "weight": float(row.get("weight", 0)),
             "user_id": int(row.get("user_id", 0)),
             "condition": row.get("condition", "unknown condition")
         })
         ids.append(f"record-{i}")
 
+        print(f"📄 Indexed: {text}")
+
     embeddings = get_embeddings(texts)
-    collection.add(documents=texts, embeddings=embeddings, metadatas=metadatas, ids=ids)
+    collection.add(
+        documents=texts,
+        embeddings=embeddings,
+        metadatas=metadatas,
+        ids=ids
+    )
+
+    print(f"✅ Indexed {len(texts)} shipment records into Chroma.")
+
 
 # ✅ OpenAI client (v1.x)
 openai_client = OpenAI(api_key=openai_api_key)
@@ -88,6 +104,9 @@ openai_client = OpenAI(api_key=openai_api_key)
 # --- Main RAG Query Function ---
 # ✅ RAG query logic
 def query_gpt_with_rag(user_query: str) -> str:
+    # ✅ Ensure embeddings are loaded at query time
+    load_or_index_shipments()
+
     # 1. Retrieve relevant documents
     results = collection.query(
         query_texts=[user_query],
