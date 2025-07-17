@@ -172,5 +172,23 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
     conn.close()
     return results
 
+
+@app.get("/api/manifests")
+def get_manifests(filter: str = Query(None), shipperId: str = Query(None)):
+    print(f"get Manifests: {filter}, {shipperId}")
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT manifest_id FROM shipping_manifest
+        ORDER BY manifest_id DESC             
+    """) 
+
+    results = cursor.fetchall()
+    #print(f"Manifests: {results}")
+    cursor.close()
+    conn.close()
+    return results
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
