@@ -53,8 +53,8 @@ function RecordsByLocaton() {
       >
         <option value="">-- Select a container --</option>
         {containers.map(c => (
-          <option key={c.container_id} value={c.container_id}>
-            {c.container_id}
+          <option key={c.shipper_id} value={c.shipper_id}>
+            {c.shipper_id}
           </option>
         ))}
       </select>

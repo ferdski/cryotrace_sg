@@ -62,6 +62,7 @@ def get_containers():
 
 @app.get("/api/containers")
 def get_containers():
+    print("get Containers")
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM shippers")
@@ -71,16 +72,17 @@ def get_containers():
     return results
 
 @app.get("/api/records")
-def get_records(filter: str = Query(None), containerId: str = Query(None)):
+def get_records(filter: str = Query(None), shipperId: str = Query(None)):
+    print(f"records api: {filter}, {shipperId}")
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    if filter == "date" and containerId:
+    if filter == "date" and shipperId:
         cursor.execute("""
-        SELECT * FROM Shipment_Records WHERE container_id = %s ORDER BY timestamp
-        """, (containerId,))
+        SELECT * FROM Shipment_Records WHERE shipper_id = %s ORDER BY timestamp
+        """, (shipperId,))
     else:
-        cursor.execute("SELECT * FROM Shipment_Records")
+        cursor.execute("SELECT * FROM movements")
 
     results = cursor.fetchall()
     cursor.close()
