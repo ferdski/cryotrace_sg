@@ -22,8 +22,8 @@ function RenderRecordsTableDate({ records }) {
           {records.map(record => (
             <tr key={record.record_id}>
               <td>{new Date(record.timestamp).toLocaleString()}</td>
-              <td>{record.location}</td>
-              <td>{record.transit}</td>
+              <td>{record.destination_city} {record.destination_state}</td>
+              <td>{record.event_type}</td>
               <td>{parseFloat(record.weight).toFixed(1)}</td>
               <td>{record.user_id}</td>
               <td>{record.condition_notes}</td>

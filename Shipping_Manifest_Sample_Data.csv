@@ -1,0 +1,84 @@
+manifest_id,shipper_id,origin_location_id,origin_contact_name,destination_location_id,destination_contact_name,scheduled_ship_time,expected_receive_time,projected_weight_kg,temperature_c,notes,created_by_user_id,created_at
+MAN-000001,shipper-ln2-30-00001,2,Technician Park,9,"Dr. Gomez, Receiving Specialist",2025-04-20 17:52:03,2025-04-22 09:52:03,28.54,-196.0,Clean and intact,1,2025-04-20 17:52:03
+MAN-000002,shipper-ln2-30-00001,1,Nurse Jenkins,8,"Dr. Gomez, Receiving Specialist",2025-04-27 09:52:03,2025-04-27 22:52:03,29.56,-196.0,Light condensation observed,5,2025-04-27 09:52:03
+MAN-000003,shipper-ln2-30-00001,9,"Ms. Lee, Clinical Supervisor",10,"Ms. Lee, Clinical Supervisor",2025-04-30 22:52:03,2025-05-01 14:52:03,29.18,-196.0,Clean and intact,2,2025-04-30 22:52:03
+MAN-000004,shipper-ln2-30-00001,4,"Ms. Lee, Clinical Supervisor",3,"Dr. Gomez, Receiving Specialist",2025-05-03 14:52:03,2025-05-04 05:52:03,29.69,-196.0,Exterior scuffed,3,2025-05-03 14:52:03
+MAN-000005,shipper-ln2-30-00001,6,"Dr. Shaw, Lab Manager",3,Nurse Jenkins,2025-05-07 05:52:03,2025-05-08 19:52:03,28.91,-196.0,No visible damage,3,2025-05-07 05:52:03
+MAN-000006,shipper-ln2-30-00002,1,"Dr. Shaw, Lab Manager",8,"Dr. Gomez, Receiving Specialist",2025-04-18 17:52:03,2025-04-19 06:52:03,28.87,-196.0,"Lid checked, sealed",2,2025-04-18 17:52:03
+MAN-000007,shipper-ln2-30-00002,7,"Dr. Shaw, Lab Manager",10,"Dr. Gomez, Receiving Specialist",2025-04-20 06:52:03,2025-04-21 21:52:03,29.4,-196.0,Light condensation observed,1,2025-04-20 06:52:03
+MAN-000008,shipper-ln2-30-00002,9,"Ms. Lee, Clinical Supervisor",10,"Ms. Lee, Clinical Supervisor",2025-04-25 21:52:03,2025-04-26 21:52:03,29.6,-196.0,No visible damage,5,2025-04-25 21:52:03
+MAN-000009,shipper-ln2-30-00002,4,"Dr. Gomez, Receiving Specialist",10,"Ms. Lee, Clinical Supervisor",2025-04-28 21:52:03,2025-04-29 19:52:03,29.07,-196.0,Exterior scuffed,4,2025-04-28 21:52:03
+MAN-000010,shipper-ln2-30-00002,6,"Mr. Patel, Shipping Clerk",9,Technician Park,2025-04-30 19:52:03,2025-05-01 08:52:03,29.52,-196.0,Light condensation observed,3,2025-04-30 19:52:03
+MAN-000011,shipper-ln2-30-00003,5,Technician Park,7,Nurse Jenkins,2025-04-22 17:52:03,2025-04-24 08:52:03,29.58,-196.0,Clean and intact,3,2025-04-22 17:52:03
+MAN-000012,shipper-ln2-30-00003,1,"Mr. Patel, Shipping Clerk",8,"Ms. Lee, Clinical Supervisor",2025-04-25 08:52:03,2025-04-27 08:52:03,28.56,-196.0,Clean and intact,5,2025-04-25 08:52:03
+MAN-000013,shipper-ln2-30-00003,2,Nurse Jenkins,4,"Ms. Lee, Clinical Supervisor",2025-05-02 08:52:03,2025-05-03 13:52:03,28.68,-196.0,Slight dent on base,1,2025-05-02 08:52:03
+MAN-000014,shipper-ln2-30-00003,1,Nurse Jenkins,9,"Dr. Shaw, Lab Manager",2025-05-06 13:52:03,2025-05-07 12:52:03,28.99,-196.0,No visible damage,2,2025-05-06 13:52:03
+MAN-000015,shipper-ln2-30-00003,10,"Dr. Shaw, Lab Manager",2,"Mr. Patel, Shipping Clerk",2025-05-10 12:52:03,2025-05-12 04:52:03,28.94,-196.0,"Lid checked, sealed",1,2025-05-10 12:52:03
+MAN-000016,shipper-ln2-30-00004,6,Technician Park,10,Technician Park,2025-04-17 17:52:03,2025-04-18 11:52:03,29.58,-196.0,Exterior scuffed,1,2025-04-17 17:52:03
+MAN-000017,shipper-ln2-30-00004,4,"Dr. Shaw, Lab Manager",9,"Ms. Lee, Clinical Supervisor",2025-04-21 11:52:03,2025-04-22 14:52:03,29.15,-196.0,Light condensation observed,3,2025-04-21 11:52:03
+MAN-000018,shipper-ln2-30-00004,6,"Dr. Shaw, Lab Manager",9,"Ms. Lee, Clinical Supervisor",2025-04-23 14:52:03,2025-04-25 09:52:03,28.8,-196.0,Minor scratches,1,2025-04-23 14:52:03
+MAN-000019,shipper-ln2-30-00004,1,"Ms. Lee, Clinical Supervisor",10,"Dr. Gomez, Receiving Specialist",2025-04-30 09:52:03,2025-05-01 20:52:03,29.4,-196.0,Exterior scuffed,3,2025-04-30 09:52:03
+MAN-000020,shipper-ln2-30-00004,3,Technician Park,9,Nurse Jenkins,2025-05-05 20:52:03,2025-05-07 19:52:03,29.24,-196.0,"Lid checked, sealed",3,2025-05-05 20:52:03
+MAN-000021,shipper-ln2-30-00004,1,Nurse Jenkins,2,"Dr. Gomez, Receiving Specialist",2025-05-12 19:52:03,2025-05-13 19:52:03,29.12,-196.0,No visible damage,3,2025-05-12 19:52:03
+MAN-000022,shipper-ln2-30-00005,7,Technician Park,1,Technician Park,2025-04-22 17:52:03,2025-04-23 23:52:03,29.48,-196.0,Slight dent on base,2,2025-04-22 17:52:03
+MAN-000023,shipper-ln2-30-00005,2,"Dr. Gomez, Receiving Specialist",5,"Mr. Patel, Shipping Clerk",2025-04-28 23:52:03,2025-04-30 08:52:03,28.91,-196.0,Exterior scuffed,5,2025-04-28 23:52:03
+MAN-000024,shipper-ln2-30-00005,4,Nurse Jenkins,10,"Dr. Gomez, Receiving Specialist",2025-05-05 08:52:03,2025-05-07 03:52:03,29.21,-196.0,Light condensation observed,3,2025-05-05 08:52:03
+MAN-000025,shipper-ln2-30-00005,8,"Ms. Lee, Clinical Supervisor",6,"Ms. Lee, Clinical Supervisor",2025-05-09 03:52:03,2025-05-10 16:52:03,28.71,-196.0,No visible damage,5,2025-05-09 03:52:03
+MAN-000026,shipper-ln2-30-00005,9,Nurse Jenkins,6,"Dr. Gomez, Receiving Specialist",2025-05-11 16:52:03,2025-05-12 10:52:03,29.24,-196.0,Minor scratches,1,2025-05-11 16:52:03
+MAN-000027,shipper-ln2-30-00005,5,Technician Park,10,"Mr. Patel, Shipping Clerk",2025-05-17 10:52:03,2025-05-19 06:52:03,28.59,-196.0,Minor scratches,5,2025-05-17 10:52:03
+MAN-000028,shipper-ln2-30-00005,3,Nurse Jenkins,10,Technician Park,2025-05-21 06:52:03,2025-05-22 01:52:03,28.62,-196.0,Clean and intact,1,2025-05-21 06:52:03
+MAN-000029,shipper-ln2-30-00006,1,Technician Park,10,"Ms. Lee, Clinical Supervisor",2025-04-23 17:52:03,2025-04-24 22:52:03,29.1,-196.0,Slight dent on base,3,2025-04-23 17:52:03
+MAN-000030,shipper-ln2-30-00006,1,Technician Park,4,"Mr. Patel, Shipping Clerk",2025-04-29 22:52:03,2025-04-30 22:52:03,29.34,-196.0,Clean and intact,2,2025-04-29 22:52:03
+MAN-000031,shipper-ln2-30-00006,2,"Mr. Patel, Shipping Clerk",9,"Mr. Patel, Shipping Clerk",2025-05-04 22:52:03,2025-05-06 19:52:03,28.83,-196.0,Exterior scuffed,5,2025-05-04 22:52:03
+MAN-000032,shipper-ln2-30-00006,7,Technician Park,1,"Mr. Patel, Shipping Clerk",2025-05-09 19:52:03,2025-05-10 22:52:03,29.63,-196.0,Clean and intact,2,2025-05-09 19:52:03
+MAN-000033,shipper-ln2-30-00006,10,"Mr. Patel, Shipping Clerk",3,"Dr. Shaw, Lab Manager",2025-05-12 22:52:03,2025-05-14 10:52:03,29.08,-196.0,No visible damage,5,2025-05-12 22:52:03
+MAN-000034,shipper-ln2-30-00006,5,Technician Park,8,"Dr. Shaw, Lab Manager",2025-05-16 10:52:03,2025-05-18 05:52:03,28.58,-196.0,Exterior scuffed,5,2025-05-16 10:52:03
+MAN-000035,shipper-ln2-30-00006,7,Nurse Jenkins,1,Technician Park,2025-05-19 05:52:03,2025-05-20 19:52:03,29.23,-196.0,No visible damage,3,2025-05-19 05:52:03
+MAN-000036,shipper-ln2-30-00007,10,Technician Park,7,"Ms. Lee, Clinical Supervisor",2025-04-22 17:52:03,2025-04-23 12:52:03,29.25,-196.0,Exterior scuffed,4,2025-04-22 17:52:03
+MAN-000037,shipper-ln2-30-00007,7,"Ms. Lee, Clinical Supervisor",2,"Mr. Patel, Shipping Clerk",2025-04-27 12:52:03,2025-04-28 14:52:03,28.75,-196.0,Clean and intact,5,2025-04-27 12:52:03
+MAN-000038,shipper-ln2-30-00007,9,Nurse Jenkins,2,"Mr. Patel, Shipping Clerk",2025-04-29 14:52:03,2025-04-30 16:52:03,28.51,-196.0,Light condensation observed,3,2025-04-29 14:52:03
+MAN-000039,shipper-ln2-30-00007,4,"Mr. Patel, Shipping Clerk",7,Technician Park,2025-05-03 16:52:03,2025-05-04 21:52:03,29.41,-196.0,No visible damage,2,2025-05-03 16:52:03
+MAN-000040,shipper-ln2-30-00007,6,Technician Park,7,"Ms. Lee, Clinical Supervisor",2025-05-07 21:52:03,2025-05-09 14:52:03,28.58,-196.0,Minor scratches,3,2025-05-07 21:52:03
+MAN-000041,shipper-ln2-20-00008,3,Technician Park,8,"Dr. Gomez, Receiving Specialist",2025-04-18 17:52:03,2025-04-19 08:52:03,19.75,-196.0,Minor scratches,1,2025-04-18 17:52:03
+MAN-000042,shipper-ln2-20-00008,10,"Dr. Gomez, Receiving Specialist",6,"Dr. Shaw, Lab Manager",2025-04-20 08:52:03,2025-04-21 04:52:03,19.6,-196.0,"Lid checked, sealed",3,2025-04-20 08:52:03
+MAN-000043,shipper-ln2-20-00008,7,"Ms. Lee, Clinical Supervisor",8,"Dr. Shaw, Lab Manager",2025-04-22 04:52:03,2025-04-24 01:52:03,19.5,-196.0,Slight dent on base,5,2025-04-22 04:52:03
+MAN-000044,shipper-ln2-20-00008,7,"Dr. Gomez, Receiving Specialist",4,"Dr. Gomez, Receiving Specialist",2025-04-27 01:52:03,2025-04-27 19:52:03,19.58,-196.0,No visible damage,1,2025-04-27 01:52:03
+MAN-000045,shipper-ln2-20-00008,3,"Ms. Lee, Clinical Supervisor",6,"Mr. Patel, Shipping Clerk",2025-04-28 19:52:03,2025-04-30 08:52:03,19.67,-196.0,Slight dent on base,3,2025-04-28 19:52:03
+MAN-000046,shipper-ln2-20-00009,10,"Mr. Patel, Shipping Clerk",1,Technician Park,2025-04-18 17:52:03,2025-04-19 14:52:03,18.6,-196.0,Minor scratches,2,2025-04-18 17:52:03
+MAN-000047,shipper-ln2-20-00009,2,"Mr. Patel, Shipping Clerk",8,"Dr. Gomez, Receiving Specialist",2025-04-24 14:52:03,2025-04-25 11:52:03,18.68,-196.0,Minor scratches,2,2025-04-24 14:52:03
+MAN-000048,shipper-ln2-20-00009,5,Technician Park,1,"Ms. Lee, Clinical Supervisor",2025-04-28 11:52:03,2025-04-30 05:52:03,18.87,-196.0,Clean and intact,3,2025-04-28 11:52:03
+MAN-000049,shipper-ln2-20-00009,2,Nurse Jenkins,9,Nurse Jenkins,2025-05-04 05:52:03,2025-05-05 23:52:03,18.05,-196.0,Exterior scuffed,5,2025-05-04 05:52:03
+MAN-000050,shipper-ln2-20-00010,9,Technician Park,6,"Dr. Shaw, Lab Manager",2025-04-17 17:52:03,2025-04-19 02:52:03,19.11,-196.0,"Lid checked, sealed",3,2025-04-17 17:52:03
+MAN-000051,shipper-ln2-20-00010,6,Nurse Jenkins,8,"Dr. Gomez, Receiving Specialist",2025-04-22 02:52:03,2025-04-23 12:52:03,19.68,-196.0,No visible damage,3,2025-04-22 02:52:03
+MAN-000052,shipper-ln2-20-00010,4,"Dr. Shaw, Lab Manager",2,"Mr. Patel, Shipping Clerk",2025-04-24 12:52:03,2025-04-26 10:52:03,19.59,-196.0,"Lid checked, sealed",5,2025-04-24 12:52:03
+MAN-000053,shipper-ln2-20-00010,5,Nurse Jenkins,8,"Dr. Gomez, Receiving Specialist",2025-04-29 10:52:03,2025-04-30 08:52:03,19.71,-196.0,Clean and intact,4,2025-04-29 10:52:03
+MAN-000054,shipper-ln2-20-00010,6,"Mr. Patel, Shipping Clerk",5,"Dr. Shaw, Lab Manager",2025-05-03 08:52:03,2025-05-03 21:52:03,19.04,-196.0,No visible damage,5,2025-05-03 08:52:03
+MAN-000055,shipper-ln2-20-00011,2,"Dr. Shaw, Lab Manager",8,Technician Park,2025-04-26 17:52:03,2025-04-27 09:52:03,18.77,-196.0,Clean and intact,1,2025-04-26 17:52:03
+MAN-000056,shipper-ln2-20-00011,1,"Ms. Lee, Clinical Supervisor",2,"Mr. Patel, Shipping Clerk",2025-05-02 09:52:03,2025-05-04 05:52:03,18.69,-196.0,No visible damage,1,2025-05-02 09:52:03
+MAN-000057,shipper-ln2-20-00011,1,"Ms. Lee, Clinical Supervisor",8,"Dr. Shaw, Lab Manager",2025-05-08 05:52:03,2025-05-09 06:52:03,18.02,-196.0,Minor scratches,1,2025-05-08 05:52:03
+MAN-000058,shipper-ln2-20-00011,6,Technician Park,10,"Dr. Gomez, Receiving Specialist",2025-05-14 06:52:03,2025-05-15 15:52:03,18.63,-196.0,Minor scratches,1,2025-05-14 06:52:03
+MAN-000059,shipper-ln2-20-00011,4,"Dr. Shaw, Lab Manager",5,"Mr. Patel, Shipping Clerk",2025-05-18 15:52:03,2025-05-20 08:52:03,18.9,-196.0,Clean and intact,4,2025-05-18 15:52:03
+MAN-000060,shipper-ln2-20-00012,4,"Mr. Patel, Shipping Clerk",3,Nurse Jenkins,2025-04-17 17:52:03,2025-04-19 14:52:03,19.39,-196.0,Clean and intact,1,2025-04-17 17:52:03
+MAN-000061,shipper-ln2-20-00012,10,Technician Park,4,Nurse Jenkins,2025-04-23 14:52:03,2025-04-25 14:52:03,19.05,-196.0,Exterior scuffed,5,2025-04-23 14:52:03
+MAN-000062,shipper-ln2-20-00012,6,"Dr. Gomez, Receiving Specialist",3,"Dr. Shaw, Lab Manager",2025-04-26 14:52:03,2025-04-28 11:52:03,19.72,-196.0,Slight dent on base,5,2025-04-26 14:52:03
+MAN-000063,shipper-ln2-20-00012,8,"Ms. Lee, Clinical Supervisor",7,"Mr. Patel, Shipping Clerk",2025-05-03 11:52:03,2025-05-05 00:52:03,19.09,-196.0,"Lid checked, sealed",4,2025-05-03 11:52:03
+MAN-000064,shipper-ln2-20-00012,6,Nurse Jenkins,7,Nurse Jenkins,2025-05-08 00:52:03,2025-05-09 15:52:03,19.1,-196.0,"Lid checked, sealed",3,2025-05-08 00:52:03
+MAN-000065,shipper-ln2-20-00012,7,"Ms. Lee, Clinical Supervisor",9,Nurse Jenkins,2025-05-14 15:52:03,2025-05-16 02:52:03,19.63,-196.0,Exterior scuffed,4,2025-05-14 15:52:03
+MAN-000066,shipper-ln2-20-00013,2,"Dr. Shaw, Lab Manager",10,Technician Park,2025-04-19 17:52:03,2025-04-21 09:52:03,19.09,-196.0,"Lid checked, sealed",2,2025-04-19 17:52:03
+MAN-000067,shipper-ln2-20-00013,1,"Dr. Gomez, Receiving Specialist",8,"Ms. Lee, Clinical Supervisor",2025-04-22 09:52:03,2025-04-22 21:52:03,19.14,-196.0,Minor scratches,2,2025-04-22 09:52:03
+MAN-000068,shipper-ln2-20-00013,9,"Mr. Patel, Shipping Clerk",2,"Dr. Shaw, Lab Manager",2025-04-24 21:52:03,2025-04-26 17:52:03,19.76,-196.0,No visible damage,2,2025-04-24 21:52:03
+MAN-000069,shipper-ln2-20-00013,10,"Dr. Gomez, Receiving Specialist",2,"Dr. Shaw, Lab Manager",2025-04-28 17:52:03,2025-04-30 14:52:03,19.03,-196.0,No visible damage,2,2025-04-28 17:52:03
+MAN-000070,shipper-ln2-20-00013,2,Technician Park,1,"Dr. Shaw, Lab Manager",2025-05-02 14:52:03,2025-05-04 11:52:03,19.34,-196.0,"Lid checked, sealed",4,2025-05-02 14:52:03
+MAN-000071,shipper-ln2-20-00013,3,"Dr. Gomez, Receiving Specialist",9,"Dr. Shaw, Lab Manager",2025-05-08 11:52:03,2025-05-09 16:52:03,19.75,-196.0,No visible damage,5,2025-05-08 11:52:03
+MAN-000072,shipper-ln2-20-00014,2,Nurse Jenkins,5,Technician Park,2025-04-27 17:52:03,2025-04-29 10:52:03,19.74,-196.0,Light condensation observed,1,2025-04-27 17:52:03
+MAN-000073,shipper-ln2-20-00014,10,"Dr. Shaw, Lab Manager",5,Nurse Jenkins,2025-05-03 10:52:03,2025-05-04 01:52:03,19.13,-196.0,Exterior scuffed,5,2025-05-03 10:52:03
+MAN-000074,shipper-ln2-20-00014,6,"Dr. Gomez, Receiving Specialist",5,Nurse Jenkins,2025-05-05 01:52:03,2025-05-06 07:52:03,19.08,-196.0,Exterior scuffed,1,2025-05-05 01:52:03
+MAN-000075,shipper-ln2-20-00014,7,"Dr. Gomez, Receiving Specialist",1,Technician Park,2025-05-11 07:52:03,2025-05-12 11:52:03,19.71,-196.0,No visible damage,3,2025-05-11 07:52:03
+MAN-000076,shipper-ln2-20-00014,1,Nurse Jenkins,4,"Ms. Lee, Clinical Supervisor",2025-05-15 11:52:03,2025-05-17 06:52:03,19.28,-196.0,Clean and intact,1,2025-05-15 11:52:03
+MAN-000077,shipper-ln2-20-00014,5,Nurse Jenkins,7,"Ms. Lee, Clinical Supervisor",2025-05-19 06:52:03,2025-05-20 13:52:03,19.58,-196.0,No visible damage,1,2025-05-19 06:52:03
+MAN-000078,shipper-ln2-20-00014,1,"Dr. Gomez, Receiving Specialist",5,Nurse Jenkins,2025-05-21 13:52:03,2025-05-22 12:52:03,19.19,-196.0,"Lid checked, sealed",1,2025-05-21 13:52:03
+MAN-000079,shipper-ln2-20-00015,10,Technician Park,3,"Dr. Shaw, Lab Manager",2025-04-23 17:52:03,2025-04-25 11:52:03,19.55,-196.0,No visible damage,3,2025-04-23 17:52:03
+MAN-000080,shipper-ln2-20-00015,8,Technician Park,10,"Dr. Shaw, Lab Manager",2025-04-28 11:52:03,2025-04-29 14:52:03,19.18,-196.0,No visible damage,4,2025-04-28 11:52:03
+MAN-000081,shipper-ln2-20-00015,8,"Mr. Patel, Shipping Clerk",4,"Mr. Patel, Shipping Clerk",2025-04-30 14:52:03,2025-05-02 00:52:03,19.11,-196.0,No visible damage,4,2025-04-30 14:52:03
+MAN-000082,shipper-ln2-20-00015,10,"Dr. Shaw, Lab Manager",3,"Mr. Patel, Shipping Clerk",2025-05-04 00:52:03,2025-05-04 22:52:03,19.68,-196.0,No visible damage,2,2025-05-04 00:52:03
+MAN-000083,shipper-ln2-20-00015,9,"Ms. Lee, Clinical Supervisor",2,"Dr. Shaw, Lab Manager",2025-05-06 22:52:03,2025-05-07 18:52:03,19.13,-196.0,Clean and intact,4,2025-05-06 22:52:03

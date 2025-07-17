@@ -10,7 +10,7 @@ import chromadb
 from chromadb.config import Settings
 
 # --- Load environment variables ---
-load_dotenv()
+load_dotenv(dotenv_path="server/.env")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ✅ Setup ChromaDB client (with persistence)
