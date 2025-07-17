@@ -2,10 +2,10 @@
 import React from 'react';
 import './ContainersList.css'; // Reuse the styling
 
-function RecordsTableLocation({ records }) {
+function RenderRecordsTableManifestId({ records }) {
   return (
     <div className="containers-list">
-      <h2>Shipment Records By Origin</h2>
+      <h2>Shipment Records by Manifest Id</h2>
       <table>
         <thead>
           <tr>
@@ -48,4 +48,4 @@ function RecordsTableLocation({ records }) {
   );
 }
 
-export default RecordsTableLocation;
+export default RenderRecordsTableManifestId;

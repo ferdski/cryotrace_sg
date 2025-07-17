@@ -1,15 +1,22 @@
-// src/components/RecordsByLocation.js
+// src/components/RecordsByManifestId.js
 import React, { useEffect, useState } from 'react';
-import RecordsTableLocation from './RenderRecordsTableLocation';
+import RecordsTableManifestId from './RenderRecordsTableManifestId';
 
-function RecordsByLocaton() {
+
+function RecordsByManifestId() {
   const [containers, setContainers] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [records, setRecords] = useState([]);
 
+  console.log(`ip = `, process.env.REACT_APP_API_BASE_URL);
+
+  console.log(`baseUrl: ${process.env.REACT_APP_API_BASE_URL}`);
+
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
   const fullUrl = `${baseUrl}/api/records`;
   const fullUrlContainers = `${baseUrl}/api/containers`;
+
+  console.log("Fetching from:", fullUrl, fullUrlContainers); // ✅ Confirm this prints
 
   useEffect(() => {
     fetch(`${fullUrlContainers}`)
@@ -20,28 +27,14 @@ function RecordsByLocaton() {
 
   useEffect(() => {
     if (selectedId) {
-      fetch(`${fullUrl}?filter=location&shipperId=${selectedId}`)
-        .then(res => res.json())
-        .then(data => setRecords(data))
-        .catch(err => console.error('Error fetching records:', err));
+      fetch(`${fullUrl}?filter=manifestid&shipperId=${selectedId}`)
+        .then((res) => res.json())
+        .then((data) => setRecords(data))
+        .catch((err) => {
+          console.error('Error fetching records:', err);
+        });
     }
   }, [selectedId, fullUrl]);
-
-  /*useEffect(() => {
-    fetch('http://localhost:3001/api/containers')
-      .then(res => res.json())
-      .then(data => setContainers(data))
-      .catch(err => console.error('Error fetching containers:', err));
-  }, []);
-
-  useEffect(() => {
-    if (selectedId) {
-      fetch(`http://localhost:3001/api/records?filter=location&containerId=${selectedId}`)
-        .then(res => res.json())
-        .then(data => setRecords(data))
-        .catch(err => console.error('Error fetching records:', err));
-    }
-  }, [selectedId]);*/
 
   return (
     <div className="containers-list">
@@ -59,9 +52,10 @@ function RecordsByLocaton() {
         ))}
       </select>
 
-      {records.length > 0 && <RecordsTableLocation records={records} />}
+      {records.length > 0 && <RecordsTableManifestId records={records} />}
     </div>
   );
 }
 
-export default RecordsByLocaton;
+export default RecordsByManifestId;
+

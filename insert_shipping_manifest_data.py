@@ -56,7 +56,19 @@ try:
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
-        shipper_id = f"{row['shipper_id']:04}" #f"{row["shipper_id"]:04}"
+        # change index number frm 5 digits to 4 digits to line up with DB existing
+        prefix, suffix = row['shipper_id'].rsplit('-', maxsplit=1)
+        
+        if '30' in prefix:
+            suffix = int(suffix[1:]) + 7
+        else:
+            suffix = int(suffix[1:]) - 7
+            if suffix > 7: suffix = 7
+
+
+        suffix = f"{suffix:04d}"  
+        shipper_id = prefix + '-' + suffix
+        
         values = (
             row["manifest_id"],
             shipper_id,
@@ -73,6 +85,7 @@ try:
             row["created_at"]
         )
 
+        print(f"values: {values}")
         cursor.execute(insert_query, values)
         print(f"✅ Inserted manifest_id: {row['manifest_id']}")
 

@@ -13,6 +13,7 @@ function Sidebar() {
     <ul className="submenu">
       <li><Link to="/records/date">By date</Link></li>
       <li><Link to="/records/location">By location</Link></li>
+      <li><Link to="/records/manifestid">By Manifest Id</Link></li>
     </ul>
   </li>
 </ul>

@@ -7,6 +7,7 @@ import UsersList from './components/UsersList';  // ← import your component
 import ContainersList from './components/ContainersList';  // ← import your component
 import RecordsByDate from './components/RecordsByDate';
 import RecordsByLocation from './components/RecordsByLocation';
+import RecordsByManifestId from './components/RecordsByManifestId';
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
             <Route path="/containers" element={<ContainersList />} />
               <Route path="/records/date" element={<RecordsByDate />} />
               <Route path="/records/location" element={<RecordsByLocation />} />
+              <Route path="/records/manifestid" element={<RecordsByManifestId />} />
           </Routes>
         </div>
       </div>
