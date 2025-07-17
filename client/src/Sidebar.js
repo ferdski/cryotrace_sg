@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import './Sidebar.css';
+import { NavLink } from 'react-router-dom';
 
 function Sidebar() {
   return (
@@ -14,6 +15,9 @@ function Sidebar() {
       <li><Link to="/records/date">By date</Link></li>
       <li><Link to="/records/location">By location</Link></li>
       <li><Link to="/records/All">All</Link></li>
+      <NavLink to="/pickup-events" className="sidebar-link">
+        Pickup Events
+      </NavLink>
     </ul>
   </li>
 </ul>

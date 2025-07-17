@@ -9,6 +9,8 @@ import RecordsByDate from './components/RecordsByDate';
 import RecordsByLocation from './components/RecordsByLocation';
 import RecordsByManifestId from './components/RecordsByManifestId';
 import RecordsAll from './components/RecordsAll';
+import PickupEventsPage from './pages/PickupEventsPage';
+
 
 const App = () => {
   return (
@@ -23,6 +25,7 @@ const App = () => {
               <Route path="/records/location" element={<RecordsByLocation />} />
               <Route path="/records/manifestid" element={<RecordsByManifestId />} />
               <Route path="/records/all" element={<RecordsAll/>} />
+              <Route path="/pickup-events" element={<PickupEventsPage />} />              
           </Routes>
         </div>
       </div>

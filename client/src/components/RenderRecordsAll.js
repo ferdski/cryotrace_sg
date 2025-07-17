@@ -18,7 +18,6 @@ function RenderRecordsAll({ records }) {
             <th>Weight (kg)</th>
             <th>User id</th>
             <th>Condition</th>
-            <th>Image</th>
           </tr>
         </thead>
         <tbody>
@@ -33,13 +32,7 @@ function RenderRecordsAll({ records }) {
               <td>{parseFloat(record.projected_weight_kg).toFixed(1)}</td>
               <td>{record.created_by_user_id}</td>
               <td>{record.notes}</td>
-              <td>
-                {record.image_path ? (
-                  <a href={record.image_path} target="_blank" rel="noopener noreferrer">View</a>
-                ) : (
-                  '—'
-                )}
-              </td>
+
             </tr>
           ))}
         </tbody>
