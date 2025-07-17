@@ -38,13 +38,13 @@ function RecordsByManifestId() {
 
   return (
     <div className="containers-list">
-      <label htmlFor="container-select"><strong>Container:    </strong></label>
+      <label htmlFor="container-select"><strong>Shipper Id:    </strong></label>
       <select
         id="container-select"
         value={selectedId}
         onChange={e => setSelectedId(e.target.value)}
       >
-        <option value="">-- Select a container --</option>
+        <option value="">-- Select --</option>
         {containers.map(c => (
           <option key={c.shipper_id} value={c.shipper_id}>
             {c.shipper_id}

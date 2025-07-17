@@ -5,7 +5,7 @@ import './ContainersList.css'; // Reuse the styling
 function RecordsTableLocation({ records }) {
   return (
     <div className="containers-list">
-      <h2>Shipment Records By Origin</h2>
+      <h2>Manifest Records By Origin</h2>
       <table>
         <thead>
           <tr>

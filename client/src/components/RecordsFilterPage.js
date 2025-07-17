@@ -25,13 +25,13 @@ function RecordsFilterPage({ filterType }) {
 
   return (
     <div>
-      <label htmlFor="containerSelect">Container:</label>
+      <label htmlFor="containerSelect">Shipper Id:</label>
       <select
         id="containerSelect"
         value={selectedId}
         onChange={(e) => setSelectedId(e.target.value)}
       >
-        <option value="">-- Select a container --</option>
+        <option value="">-- Select --</option>
         {containers.map(c => (
           <option key={c.container_id} value={c.container_id}>
             {c.container_id}

@@ -2,17 +2,17 @@
 import React from 'react';
 import './ContainersList.css'; // Reuse the styling
 
-function RenderRecordsTableDate({ records }) {
+function RenderRecordsAll({ records }) {
   return (
     <div className="containers-list">
-      <h2>Manifest Records By Scheduled Ship date</h2>
+      <h2>All Manifest Records</h2>
       <table>
         <thead>
           <tr>
           <th>Manifest ID</th>
             <th>Manifest Created time</th>
             <th>Shipper ID</th>
-            <th>Scheduled ship date/time</th>
+            <th>Scheduled ship time</th>
             <th>Origin</th>
             <th>Destination</th>
             <th>Weight (kg)</th>
@@ -48,4 +48,4 @@ function RenderRecordsTableDate({ records }) {
   );
 }
 
-export default RenderRecordsTableDate;
+export default RenderRecordsAll;
