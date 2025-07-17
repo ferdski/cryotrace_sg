@@ -1,3 +1,5 @@
+
+import uvicorn
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_connection
@@ -78,13 +80,73 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
     cursor = conn.cursor(dictionary=True)
 
     if filter == "date" and shipperId:
+        #cursor.execute("""
+        #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
+        #""", (shipperId,))
         cursor.execute("""
-        SELECT * FROM Shipment_Records WHERE shipper_id = %s ORDER BY timestamp
-        """, (shipperId,))
+        SELECT 
+            sm.manifest_id,
+            sm.created_at,
+            sm.shipper_id,
+            sm.scheduled_ship_time,
+            CONCAT(lo.city, ', ', lo.state) AS origin,
+            CONCAT(ld.city, ', ', ld.state) AS destination,
+            sm.projected_weight_kg,
+            sm.created_by_user_id,
+            sm.notes
+            FROM shipping_manifest sm
+            JOIN locations lo ON sm.origin_location_id = lo.id
+            JOIN locations ld ON sm.destination_location_id = ld.id   
+            ORDER BY sm.scheduled_ship_time DESC              
+        """)
+    elif filter == "manifestid" and shipperId:
+        #cursor.execute("""
+        #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
+        #""", (shipperId,))
+        cursor.execute("""
+        SELECT 
+            sm.manifest_id,
+            sm.created_at,
+            sm.shipper_id,
+            sm.scheduled_ship_time,
+            CONCAT(lo.city, ', ', lo.state) AS origin,
+            CONCAT(ld.city, ', ', ld.state) AS destination,
+            sm.projected_weight_kg,
+            sm.created_by_user_id,
+            sm.notes
+            FROM shipping_manifest sm
+            JOIN locations lo ON sm.origin_location_id = lo.id
+            JOIN locations ld ON sm.destination_location_id = ld.id   
+            ORDER BY sm.manifest_id DESC              
+        """)        
+    elif filter == "location" and shipperId:
+        #cursor.execute("""
+        #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
+        #""", (shipperId,))
+        cursor.execute("""
+        SELECT 
+            sm.manifest_id,
+            sm.created_at,
+            sm.shipper_id,
+            sm.scheduled_ship_time,
+            CONCAT(lo.city, ', ', lo.state) AS origin,
+            CONCAT(ld.city, ', ', ld.state) AS destination,
+            sm.projected_weight_kg,
+            sm.created_by_user_id,
+            sm.notes
+            FROM shipping_manifest sm
+            JOIN locations lo ON sm.origin_location_id = lo.id
+            JOIN locations ld ON sm.destination_location_id = ld.id   
+            ORDER BY origin ASC              
+        """) 
     else:
-        cursor.execute("SELECT * FROM movements")
+        print("Error in query in api/records")
 
     results = cursor.fetchall()
+    #print(f"query results: {results}")
     cursor.close()
     conn.close()
     return results
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

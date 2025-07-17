@@ -26,7 +26,7 @@ function RecordsByDate() {
 
   useEffect(() => {
     if (selectedId) {
-      fetch(`${fullUrl}?filter=date&containerId=${selectedId}`)
+      fetch(`${fullUrl}?filter=date&shipperId=${selectedId}`)
         .then((res) => res.json())
         .then((data) => setRecords(data))
         .catch((err) => {

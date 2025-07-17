@@ -52,7 +52,7 @@ def load_or_index_shipments():
         database=os.getenv("DB_NAME")
     )
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM Shipment_Records")
+    cursor.execute("SELECT * FROM shipping_manifest")
     rows = cursor.fetchall()
     cursor.close()
     conn.close()

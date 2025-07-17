@@ -3,7 +3,7 @@ async function processEvaporationRate(receiveRecord) {
 
   // 1. Find the latest "ship" record before the receive
   const [ship] = await pool.query(`
-    SELECT * FROM Shipment_Records
+    SELECT * FROM shipping_manifest
     WHERE container_id = ? AND transit = 'ship' AND timestamp < ?
     ORDER BY timestamp DESC LIMIT 1
   `, [container_id, receiveTime]);
