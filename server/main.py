@@ -97,8 +97,9 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
             FROM shipping_manifest sm
             JOIN locations lo ON sm.origin_location_id = lo.id
             JOIN locations ld ON sm.destination_location_id = ld.id   
+            WHERE sm.shipper_id = %s
             ORDER BY sm.scheduled_ship_time DESC              
-        """)
+        """, (shipperId,))
     elif filter == "manifestid" and shipperId:
         #cursor.execute("""
         #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
@@ -116,9 +117,10 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
             sm.notes
             FROM shipping_manifest sm
             JOIN locations lo ON sm.origin_location_id = lo.id
-            JOIN locations ld ON sm.destination_location_id = ld.id   
+            JOIN locations ld ON sm.destination_location_id = ld.id 
+            WHERE sm.shipper_id = %s
             ORDER BY sm.manifest_id DESC              
-        """)        
+        """, (shipperId,))        
     elif filter == "location" and shipperId:
         #cursor.execute("""
         #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
@@ -137,13 +139,35 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
             FROM shipping_manifest sm
             JOIN locations lo ON sm.origin_location_id = lo.id
             JOIN locations ld ON sm.destination_location_id = ld.id   
+            WHERE sm.shipper_id = %s                       
             ORDER BY origin ASC              
-        """) 
+        """, (shipperId,)) 
+
+    elif filter == "all":
+        #cursor.execute("""
+        #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
+        #""", (shipperId,))
+        cursor.execute("""
+        SELECT 
+            sm.manifest_id,
+            sm.created_at,
+            sm.shipper_id,
+            sm.scheduled_ship_time,
+            CONCAT(lo.city, ', ', lo.state) AS origin,
+            CONCAT(ld.city, ', ', ld.state) AS destination,
+            sm.projected_weight_kg,
+            sm.created_by_user_id,
+            sm.notes
+            FROM shipping_manifest sm
+            JOIN locations lo ON sm.origin_location_id = lo.id
+            JOIN locations ld ON sm.destination_location_id = ld.id                      
+            ORDER BY manifest_id Desc              
+        """)         
     else:
         print("Error in query in api/records")
 
     results = cursor.fetchall()
-    #print(f"query results: {results}")
+    print(f"query results: {results}")
     cursor.close()
     conn.close()
     return results
