@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import './PickupEventsPage.css';
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 interface Manifest {
   manifest_id: string;
@@ -7,7 +9,7 @@ interface Manifest {
   destination: string;
   scheduled_ship_time: string;
   expected_receive_time: string;
-  created_by_user_id: string;
+  created_by_user_id: number;
 }
 
 const PickupEventsPage: React.FC = () => {
@@ -19,9 +21,10 @@ const PickupEventsPage: React.FC = () => {
   const [photo, setPhoto] = useState<File | null>(null);
   const [notes, setNotes] = useState<string>('');
 
-  const baseUrl = process.env.REACT_APP_API_BASE_URL;
   const fullUrl = `${baseUrl}/api/manifests`;
+  console.log('fullUrl:', fullUrl)
   useEffect(() => {
+    
     fetch(fullUrl)
       .then(res => res.json())
       .then(data => {
@@ -32,14 +35,18 @@ const PickupEventsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    console.log('selectedmanifestId',selectedManifestId);
     if (selectedManifestId) {
-      fetch(`${fullUrl}?filter=manifest&shipperId=${selectedManifestId}`)
+      fetch(`${fullUrl}?filter=manifest&manifestId=${selectedManifestId}`)
         .then(res => res.json())
         .then(data => {
             console.log('Fetched manifest by Id:', data); 
-            setSelectedManifest(data);
-          })
-
+          if (Array.isArray(data) && data.length > 0) {
+            setSelectedManifest(data[0]);
+          } else {
+            setSelectedManifest(null);
+          }
+        })
         .catch(console.error);
     } else {
       setSelectedManifest(null);
@@ -58,15 +65,17 @@ const PickupEventsPage: React.FC = () => {
       return;
     }
 
+    const fullUrl = `${baseUrl}/api/pickup-events`;
     const formData = new FormData();
     formData.append('manifest_id', selectedManifestId);
     formData.append('weight', weight.toString());
     formData.append('weight_type', weightType);
     formData.append('notes', notes);
     formData.append('photo', photo);
+    console.log(formData);
 
     try {
-      const res = await fetch('/api/pickup-events', {
+      const res = await fetch(fullUrl, {
         method: 'POST',
         body: formData,
       });
@@ -86,27 +95,24 @@ const PickupEventsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 max-w-md mx-auto space-y-4">
-      <h1 className="text-xl font-bold mb-2">Pickup Event</h1>
+    <div className="pickup-form-wrapper">
+      <h1>Pickup Event</h1>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Select Manifest</label>
-        <select
-          className="w-full border p-2 rounded"
-          value={selectedManifestId}
-          onChange={(e) => setSelectedManifestId(e.target.value)}
-        >
-          <option value="">-- Select --</option>
-          {manifests.map((m) => (
-            <option key={m.manifest_id} value={m.manifest_id}>
-              {m.manifest_id}
-            </option>
-          ))}
-        </select>
-      </div>
+      <label>Select Manifest</label>
+      <select
+        value={selectedManifestId}
+        onChange={(e) => setSelectedManifestId(e.target.value)}
+      >
+        <option value="">-- Select --</option>
+        {manifests.map((m) => (
+          <option key={m.manifest_id} value={m.manifest_id}>
+            {m.manifest_id}
+          </option>
+        ))}
+      </select>
 
       {selectedManifest && (
-        <div className="border rounded p-3 bg-gray-50 text-sm space-y-1">
+        <div className="manifest-details">
           <div><strong>Shipper ID:</strong> {selectedManifest.shipper_id}</div>
           <div><strong>Origin:</strong> {selectedManifest.origin}</div>
           <div><strong>Destination:</strong> {selectedManifest.destination}</div>
@@ -116,52 +122,35 @@ const PickupEventsPage: React.FC = () => {
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Weight</label>
-        <input
-          type="number"
-          className="w-full border p-2 rounded"
-          value={weight}
-          onChange={(e) => setWeight(parseFloat(e.target.value))}
-        />
-      </div>
+      <label>Weight</label>
+      <input
+        type="number"
+        value={weight}
+        onChange={(e) => setWeight(parseFloat(e.target.value))}
+      />
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Weight Type</label>
-        <select
-          className="w-full border p-2 rounded"
-          value={weightType}
-          onChange={(e) => setWeightType(e.target.value)}
-        >
-          <option value="kg">kg</option>
-          <option value="lbs">lbs</option>
-        </select>
-      </div>
+      <label>Weight Type</label>
+      <select value={weightType} onChange={(e) => setWeightType(e.target.value)}>
+        <option value="kg">kg</option>
+        <option value="lbs">lbs</option>
+      </select>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Photo (Camera)</label>
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handlePhotoChange}
-        />
-      </div>
+      <label>Photo (Camera)</label>
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handlePhotoChange}
+      />
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Notes</label>
-        <textarea
-          className="w-full border p-2 rounded"
-          value={notes}
-          rows={3}
-          onChange={(e) => setNotes(e.target.value)}
-        />
-      </div>
+      <label>Notes</label>
+      <textarea
+        rows={3}
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
 
-      <button
-        onClick={handleSubmit}
-        className="w-full bg-blue-600 text-white p-3 rounded font-semibold"
-      >
+      <button onClick={handleSubmit}>
         Submit Pickup Event
       </button>
     </div>
