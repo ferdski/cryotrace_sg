@@ -10,6 +10,7 @@ import RecordsByLocation from './components/RecordsByLocation';
 import RecordsByManifestId from './components/RecordsByManifestId';
 import RecordsAll from './components/RecordsAll';
 import PickupEventsPage from './pages/PickupEventsPage';
+import DropoffEventsPage from './pages/DropoffEventsPage';
 
 
 const App = () => {
@@ -25,7 +26,8 @@ const App = () => {
               <Route path="/records/location" element={<RecordsByLocation />} />
               <Route path="/records/manifestid" element={<RecordsByManifestId />} />
               <Route path="/records/all" element={<RecordsAll/>} />
-              <Route path="/pickup-events" element={<PickupEventsPage />} />              
+              <Route path="/pickup-events" element={<PickupEventsPage />} />   
+              <Route path="/dropoff-events" element={<DropoffEventsPage />} />
           </Routes>
         </div>
       </div>

@@ -15,9 +15,8 @@ function Sidebar() {
       <li><Link to="/records/date">By date</Link></li>
       <li><Link to="/records/location">By location</Link></li>
       <li><Link to="/records/All">All</Link></li>
-      <NavLink to="/pickup-events" className="sidebar-link">
-        Pickup Events
-      </NavLink>
+      <li><NavLink to="/pickup-events" activeClassName="active">Pickup Events</NavLink></li>
+      <li><NavLink to="/dropoff-events" activeClassName="active">Dropoff Events</NavLink></li>
     </ul>
   </li>
 </ul>
