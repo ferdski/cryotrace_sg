@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from chroma_rag import query_gpt_with_rag, load_or_index_shipments, collection
 import os
 #  api pickup-events
-from fastapi import FastAPI, Query, File, UploadFile, Form
+from fastapi import FastAPI, Query, File, UploadFile, Form, Request
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import shutil
@@ -190,6 +190,8 @@ def get_manifests(filter: str = Query(None), manifestId: str = Query(None)):
             SELECT 
                 sm.manifest_id,
                 sm.shipper_id,
+                sm.origin_location_id,
+                sm.destination_location_id,
                 sm.scheduled_ship_time,
                 sm.expected_receive_time,
                 sm.created_by_user_id,
@@ -276,32 +278,56 @@ async def create_pickup_event(
 UPLOAD_DIR = "uploads/dropoff_photos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+'''async def create_dropoff_event(request: Request):
+    form = await request.form()
+    print("🔍 Form keys received:", list(form.keys()))
+    print("🔍 Form values:", dict(form)) '''
+
 @app.post("/api/dropoff-events")
 async def create_dropoff_event(
-    manifest_id: str = Form(...),
-    received_location_id: int = Form(...),
-    received_contact_name: str = Form(""),
-    actual_receive_time: str = Form(...),  # Expecting ISO format (e.g., "2025-07-18T13:45:00")
-    received_weight_kg: float = Form(...),
-    condition_notes: str = Form(""),
-    photo: UploadFile = File(...),
-    received_by_user_id: int = Form(...)
-):
+        manifest_id: str = Form(...),
+        received_location_id: str = Form(...),
+        received_contact_name: str = Form(""),
+        received_weight_kg: str = Form(...),  
+        condition_notes: str = Form(...),
+        image_path: UploadFile = File(...),
+        received_by_user_id: str = Form(...)
+    ):
+
     try:
+        UPLOAD_DIR = "uploads/dropoff_photos"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
         # Save the uploaded photo
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        filename = f"{manifest_id}_{timestamp}_{photo.filename}"
+        filename = f"{manifest_id}_{timestamp}_{image_path.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(photo.file, buffer)
+        #with open(file_path, "wb") as buffer:
+        #    shutil.copyfileobj(image_path.file, buffer)
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # 🚨 Validation: check against manifest destination
+        cursor.execute("""
+            SELECT origin_location_id FROM shipping_manifest
+            WHERE manifest_id = %s
+        """, (manifest_id,))
+        manifest_location_id = cursor.fetchone()[0]
+
+        if not manifest_location_id:
+            return JSONResponse(status_code=404, content={"error": "Manifest not found"})
+
+        if manifest_location_id == received_location_id:
+            return JSONResponse(
+                status_code=422,
+                content={"error": "received_location_id must differ from manifest's destination_location_id"}
+            )
 
         # Parse datetime string to proper format
+        actual_receive_time = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         actual_receive_dt = datetime.fromisoformat(actual_receive_time)
 
         # Insert into the database
-        conn = get_connection()
-        cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO dropoff_event (
                 manifest_id,
@@ -311,8 +337,9 @@ async def create_dropoff_event(
                 received_weight_kg,
                 condition_notes,
                 image_path,
-                received_by_user_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                received_by_user_id,
+                created_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             manifest_id,
             received_location_id,
@@ -321,7 +348,8 @@ async def create_dropoff_event(
             received_weight_kg,
             condition_notes,
             filename,
-            received_by_user_id
+            received_by_user_id,
+            actual_receive_dt,
         ))
         conn.commit()
         cursor.close()

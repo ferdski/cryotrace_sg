@@ -22,12 +22,12 @@ const App = () => {
           <Routes>
             <Route path="/users" element={<UsersList />} />
             <Route path="/containers" element={<ContainersList />} />
-              <Route path="/records/date" element={<RecordsByDate />} />
-              <Route path="/records/location" element={<RecordsByLocation />} />
-              <Route path="/records/manifestid" element={<RecordsByManifestId />} />
-              <Route path="/records/all" element={<RecordsAll/>} />
-              <Route path="/pickup-events" element={<PickupEventsPage />} />   
-              <Route path="/dropoff-events" element={<DropoffEventsPage />} />
+              <Route path="/manifests/date" element={<RecordsByDate />} />
+              <Route path="/manifests/location" element={<RecordsByLocation />} />
+              <Route path="/manifests/manifestid" element={<RecordsByManifestId />} />
+              <Route path="/manifests/all" element={<RecordsAll/>} />
+              <Route path="/events/pickup-events" element={<PickupEventsPage />} />   
+              <Route path="/events/dropoff-events" element={<DropoffEventsPage />} />
           </Routes>
         </div>
       </div>
