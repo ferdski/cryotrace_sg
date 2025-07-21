@@ -85,10 +85,13 @@ export default function PickupEventsPage() {
         </label>
 
         {selectedManifest && (
-          <div className="manifest-info">
+          <div className="manifest-details">
             <p><strong>Shipper ID:</strong> {selectedManifest.shipper_id}</p>
             <p><strong>Origin:</strong> {selectedManifest.origin}</p>
             <p><strong>Destination:</strong> {selectedManifest.destination}</p>
+            <div><strong>Scheduled Ship:</strong> {selectedManifest.scheduled_ship_time}</div>
+            <div><strong>Expected Receive:</strong> {selectedManifest.expected_receive_time}</div>
+            <div><strong>Created By:</strong> {selectedManifest.created_by_user_id}</div>            
           </div>
         )}
 
