@@ -1,11 +1,17 @@
 
 import uvicorn
-from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_connection
 from pydantic import BaseModel
 from chroma_rag import query_gpt_with_rag, load_or_index_shipments, collection
 import os
+#  api pickup-events
+from fastapi import FastAPI, Query, File, UploadFile, Form
+from fastapi.responses import JSONResponse
+from datetime import datetime
+import shutil
+
+
 
 app = FastAPI()
 
@@ -203,61 +209,58 @@ def get_manifests(filter: str = Query(None), manifestId: str = Query(None)):
         """)       
 
     results = cursor.fetchall()
-    print(f"Manifests: {results}")
+    #print(f"Manifests: {results}")
     cursor.close()
     conn.close()
     return results
 
 
-#  api pickup-events
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import JSONResponse
-from datetime import datetime
-import shutil
-import os
 
-app = FastAPI()
 
 UPLOAD_DIR = "uploads/pickup_photos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
 @app.post("/api/pickup-events")
 async def create_pickup_event(
     manifest_id: str = Form(...),
-    weight: float = Form(...),
+    measured_weight_kg: float = Form(...),
     weight_type: str = Form(...),
-    notes: str = Form(""),
-    photo: UploadFile = File(...)
+    driver_user_id: int = Form(...),
+    photo: UploadFile = File(...), 
+    notes:  str = Form("")
 ):
     try:
         # Generate unique filename with timestamp
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        filename = f"{manifest_id}_{timestamp}_{photo.filename}"
+        filename = f"{photo.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
 
         # Save file to disk
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(photo.file, buffer)
+            shutil.copyfileobj(image_path.filename, buffer)
 
         # Store pickup record in the database
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO pickup_events (
+            INSERT INTO pickup_event (
                 manifest_id,
-                weight,
-                weight_type,
-                notes,
-                photo_filename,
-                timestamp
-            ) VALUES (%s, %s, %s, %s, %s, %s)
+                measured_weight_kg,
+                weight_measured_at,
+                actual_departure_at,
+                driver_user_id,
+                image_path,
+                notes.
+                created_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             manifest_id,
-            weight,
-            weight_type,
-            notes,
+            measured_weight_kg,
+            datetime.utcnow(),  # weight_measured_atarture_at
+            datetime.utcnow(), 
+            driver_user_id,
             filename,
-            datetime.utcnow()
+            notes,
+            datetime.utcnow(), 
         ))
         conn.commit()
 
@@ -267,6 +270,68 @@ async def create_pickup_event(
         print("❌ Pickup event failed:", e)
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+
+
+
+UPLOAD_DIR = "uploads/dropoff_photos"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@app.post("/api/dropoff-events")
+async def create_dropoff_event(
+    manifest_id: str = Form(...),
+    received_location_id: int = Form(...),
+    received_contact_name: str = Form(""),
+    actual_receive_time: str = Form(...),  # Expecting ISO format (e.g., "2025-07-18T13:45:00")
+    received_weight_kg: float = Form(...),
+    condition_notes: str = Form(""),
+    photo: UploadFile = File(...),
+    received_by_user_id: int = Form(...)
+):
+    try:
+        # Save the uploaded photo
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        filename = f"{manifest_id}_{timestamp}_{photo.filename}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(photo.file, buffer)
+
+        # Parse datetime string to proper format
+        actual_receive_dt = datetime.fromisoformat(actual_receive_time)
+
+        # Insert into the database
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO dropoff_event (
+                manifest_id,
+                received_location_id,
+                received_contact_name,
+                actual_receive_time,
+                received_weight_kg,
+                condition_notes,
+                image_path,
+                received_by_user_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            manifest_id,
+            received_location_id,
+            received_contact_name,
+            actual_receive_dt,
+            received_weight_kg,
+            condition_notes,
+            filename,
+            received_by_user_id
+        ))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return {"status": "Dropoff event recorded."}
+
+    except Exception as e:
+        print("❌ Dropoff event failed:", e)
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 
