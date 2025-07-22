@@ -3,19 +3,19 @@ import './ContainersList.css';
 
 function ContainersList() {
   const [containers, setContainers] = useState([]);
-
   console.log(`baseUrl: ${process.env.REACT_APP_API_BASE_URL}`);
-useEffect(() => {
-  const baseUrl = process.env.REACT_APP_API_BASE_URL;
-  const fullUrl = `${baseUrl}/api/containers`;
 
-  console.log("Fetching from:", fullUrl); // ✅ Confirm this prints
+  useEffect(() => {
+    const baseUrl = process.env.REACT_APP_API_BASE_URL;
+    const fullUrl = `${baseUrl}/api/containers`;
 
-  fetch(fullUrl)
-    .then((res) => res.json())
-    .then((data) => setContainers(data))
-    .catch((err) => console.error("Error fetching containers:", err));
-}, []);
+    console.log("Fetching from:", fullUrl); // ✅ Confirm this prints
+
+    fetch(fullUrl)
+      .then((res) => res.json())
+      .then((data) => setContainers(data))
+      .catch((err) => console.error("Error fetching containers:", err));
+  }, []);
 
   /*useEffect(() => {
   fetch("http://localhost:3001/api/containers")
