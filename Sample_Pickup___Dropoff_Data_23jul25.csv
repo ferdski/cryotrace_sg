@@ -1,0 +1,2 @@
+,manifest_id_x,measured_weight_kg,weight_type,driver_user_id,photo,notes,dev_current_time_x,manifest_id_y,received_location_id,received_contact_name,received_weight_kg,condition_notes,image_path,received_by_user_id,dev_current_time_y
+0,MANIFEST001,20.32,pickup,1,pickup_image.jpg,Simulated pickup event for testing,2025-07-22T11:00:00,MANIFEST001,101,Jane Doe,18.99,No visible damage,dropoff_image.jpg,2,2025-07-22T15:00:00
