@@ -15,7 +15,7 @@ function RenderRecordsTableManifestId({ records }) {
             <th>Scheduled ship time</th>
             <th>Origin</th>
             <th>Destination</th>
-            <th>Weight (kg)</th>
+            <th>Expected Weight (kg)</th>
             <th>User id</th>
             <th>Condition</th>
             <th>Image</th>

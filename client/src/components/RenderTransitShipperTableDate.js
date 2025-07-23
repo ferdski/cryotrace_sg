@@ -2,10 +2,10 @@
 import React from 'react';
 import './ContainersList.css'; // Reuse the styling
 
-function RenderRecordsTableDate({ records }) {
+function RenderTransitShipperTableDate({ records }) {
   return (
     <div className="containers-list">
-      <h2>Manifest Records By Scheduled Ship date</h2>
+      <h2>Transit records by Shipper number</h2>
       <table>
         <thead>
           <tr>
@@ -48,4 +48,4 @@ function RenderRecordsTableDate({ records }) {
   );
 }
 
-export default RenderRecordsTableDate;
+export default RenderTransitShipperTableDate;

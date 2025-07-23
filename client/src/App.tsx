@@ -11,7 +11,8 @@ import RecordsByManifestId from './components/RecordsByManifestId';
 import RecordsAll from './components/RecordsAll';
 import PickupEventsPage from './pages/PickupEventsPage';
 import DropoffEventsPage from './pages/DropoffEventsPage';
-
+import TransitShipperTableDate from './components/TransitShipperTableDate';
+import TransitShipperTableLocation from './components/TransitShipperTableLocation';
 
 const App = () => {
   return (
@@ -25,7 +26,9 @@ const App = () => {
               <Route path="/manifests/date" element={<RecordsByDate />} />
               <Route path="/manifests/location" element={<RecordsByLocation />} />
               <Route path="/manifests/manifestid" element={<RecordsByManifestId />} />
-              <Route path="/manifests/all" element={<RecordsAll/>} />
+              <Route path="/manifests" element={<RecordsAll/>} />
+              <Route path="/transit/date" element={<TransitShipperTableDate/>} />
+              <Route path="/transit/location" element={<TransitShipperTableLocation/>} />
               <Route path="/events/pickup-events" element={<PickupEventsPage />} />   
               <Route path="/events/dropoff-events" element={<DropoffEventsPage />} />
           </Routes>
