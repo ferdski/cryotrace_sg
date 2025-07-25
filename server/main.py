@@ -225,7 +225,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 async def create_pickup_event(
     manifest_id: str = Form(...),
     measured_weight_kg: float = Form(...),
-    weight_type: str = Form(...),
     driver_user_id: int = Form(...),
     photo: UploadFile = File(...), 
     notes:  str = Form("")
