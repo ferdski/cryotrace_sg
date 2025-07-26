@@ -26,6 +26,9 @@ function Sidebar() {
       <li><NavLink to="/events/pickup-events" activeClassName="active">Create Pickup Event</NavLink></li>
       <li><NavLink to="/events/dropoff-events" activeClassName="active">Create Dropoff Event</NavLink></li>
     </ul>
+    <ul>
+      <li><NavLink to="/routes/shipper-routes" activeClassName="active">Shipper Routes</NavLink></li>
+    </ul>
   </li>
 </ul>
   );

@@ -11,31 +11,32 @@ from datetime import datetime
 
 def load_demo_events(csv_path: str, api_base_url: str):
     # Load combined CSV file
-    csv_path = "/home/ubuntu/sg_shippers_prototype/cryotrace_sg/Sample_Pickup___Dropoff_Data_25jul25_one_line_verify.csv"
+    csv_path = "/home/ubuntu/sg_shippers_prototype/cryotrace_sg/Corrected_Pickup_Dropoff_Events_All_Manifests_corrected_v2.csv"
 
     if not csv_path:
         print(f"❌ File not found: {csv_path}")
         return
-    df = pd.read_csv(csv_path)
 
-    # POST each pickup and dropoff event from each row
-    for _, row in df.iterrows():
+    df = pd.read_csv(csv_path)
+    for index, row in df.iterrows():
+        if index == 0:
+            continue
         # --- Pickup event ---
         '''pickup_files = {
             'photo': (row['photo'], open(row['photo'], 'rb')) if pd.notna(row['photo']) else None
         }'''
         try:
-            photo = row['photo']
+
             pickup_data = {
-                'manifest_id': row['manifest_id_x'],
-                'measured_weight_kg': row['measured_weight_kg'],
-                "weight_measured_at" : row['dev_current_time_x'],
-                "actual_departure_at" : row['dev_current_time_x'],
-                'driver_user_id': row['driver_user_id'],
+                'manifest_id': row['manifest_id'],
+                'measured_weight_kg': row['pickup_weight'],
+                "weight_measured_at" : row['pickup_time'],
+                "actual_departure_at" : row['pickup_time'],
+                'driver_user_id': row['pickup_user_id'],
                 'image_path' : 'image_path',
-                'notes': row['notes'],
-                'created_at' : row['dev_current_time_x'],
-                'dev_current_time': row['dev_current_time_x']
+                'notes': 'pickup_note',
+                'created_at' : row['manifest_created_at'],
+                'dev_current_time': row['pickup_time']
 
             }
 
@@ -61,7 +62,7 @@ def load_demo_events(csv_path: str, api_base_url: str):
             LEFT JOIN locations dest ON sm.destination_location_id = dest.id
             WHERE sm.manifest_id = %s
             ORDER BY sm.manifest_id DESC
-            """, (row['manifest_id_x'],))  # for pickup events
+            """, (row['manifest_id'],))  # for pickup events
 
             results_manifest = cursor.fetchall()
             print(f"manifest query results: {results_manifest}")
@@ -88,12 +89,12 @@ def load_demo_events(csv_path: str, api_base_url: str):
                 pickup_data['driver_user_id'],
                 pickup_data['measured_weight_kg'],
                 pickup_data['notes'],
-                datetime.strptime(row['dev_current_time_x'], "%Y-%m-%d %H:%M:%S"),  # created_at
+                datetime.strptime(pickup_data['dev_current_time'], "%Y-%m-%d %H:%M:%S"),  # created_at
 
             ))
             conn.commit()            
             # also write the container_weight_event for this entry
-            print(f"Posting cwe from pickup manifest data: {row['manifest_id_x']}  , {pickup_data}")
+            print(f"Posting cwe from pickup manifest data: {row['manifest_id']}  , {pickup_data}")
 
             cursor.execute("""
                 INSERT INTO pickup_event (
@@ -119,7 +120,7 @@ def load_demo_events(csv_path: str, api_base_url: str):
                 datetime.strptime(pickup_data['dev_current_time'], "%Y-%m-%d %H:%M:%S"),  #dev_current_time
             ))
             conn.commit()
-            print(f"Posting pickup for manifest {row['manifest_id_x']}  , {pickup_data}")
+            print(f"Posting pickup for manifest {row['manifest_id']}  , {pickup_data}")
 
         except Exception as e:
             print("❌ Pickup Event failed:", e)
@@ -127,16 +128,16 @@ def load_demo_events(csv_path: str, api_base_url: str):
 
         try:
             dropoff_data = {
-                'manifest_id': row['manifest_id_y'],
-                'received_location_id': results_manifest[0]['destination_location_id'],
-                'received_contact_name':  results_manifest[0]['destination_contact_name'],
-                'actual_receive_time':  row['dev_current_time_y'],
-                'received_weight_kg':  row['received_weight_kg'],
-                'condition_notes':  row['condition_notes'],
+                'manifest_id': row['manifest_id'],
+                'received_location_id':  row['dropoff_location_id'],
+                'received_contact_name':  row['destination_contact_name'],
+                'actual_receive_time':  row['dropoff_time'],
+                'received_weight_kg':  row['dropoff_weight'],
+                'condition_notes':  'dropoff note',
                 'image_path':  'image_path',
                 'received_by_user_id':  1,
-                'created_at' : row['dev_current_time_y'],
-                'dev_current_time': row['dev_current_time_y']
+                'created_at' : row['dropoff_time'],
+                'dev_current_time': row['dropoff_time']
             }
 
             
@@ -165,7 +166,7 @@ def load_demo_events(csv_path: str, api_base_url: str):
             ))
             conn.commit()            
             # also write the container_weight_event for this entry
-            print(f"Posting cwe from pickup manifest data: {row['manifest_id_x']}  , {pickup_data}")
+            print(f"Posting cwe from pickup manifest data: {row['manifest_id']}  , {pickup_data}")
 
             cursor.execute("""
                 INSERT INTO dropoff_event (
