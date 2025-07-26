@@ -1,4 +1,4 @@
-
+import decimal
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_connection
@@ -361,10 +361,14 @@ async def create_dropoff_event(
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
+def decimal_to_float(d):
+    if isinstance(d, decimal.Decimal):
+        return float(d)
+    return d
 
 @app.get("/api/shippers/{shipper_id}/routes")
 def get_shipper_routes(shipper_id: str):
-    print(f"s_id: {shipper_id}")
+    print(f"\nshipper routes: s_id: {shipper_id}")
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -372,26 +376,82 @@ def get_shipper_routes(shipper_id: str):
         SELECT
             m.manifest_id,
             m.shipper_id,
-            CONCAT(o.company_name, ', ', o.company_address, ', ', o.city, ', ',  o.state) as Origin, 
-            CONCAT(d.company_name, ', ', d.company_address, ', ', d.city, ', ', d.state) as Destination,
+            CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ',  lp.state) as Origin, 
+            CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) as Destination,
             m.scheduled_ship_time,
             m.expected_receive_time,
-            pe.actual_departure_at,
-            de.actual_receive_time,
-            pe.measured_weight_kg,
-            de.received_weight_kg
-        FROM shipping_manifest m
-        LEFT JOIN pickup_event pe ON pe.manifest_id = m.manifest_id
-        LEFT JOIN dropoff_event de ON de.manifest_id = m.manifest_id
-        JOIN locations o ON m.origin_location_id = o.id
-        JOIN locations d ON m.destination_location_id = d.id
-        WHERE m.shipper_id = %s
-        ORDER BY pe.actual_departure_at ASC;
+
+            m.origin_contact_name AS contact_name,            
+            pe.actual_departure_at AS pickup_time,
+            pe.driver_user_id AS pickup_user_id,
+            pe.measured_weight_kg AS pickup_weight,
+            
+            de.received_weight_kg,
+            de.actual_receive_time AS dropoff_time,
+            de.received_by_user_id  AS dropoff_contact,
+            m.destination_contact_name AS contact_name,
+
+            lp.company_name,
+            lp.company_address,
+            lp.city,
+            lp.state,
+
+            cw.weight_type,
+
+            de.received_by_user_id AS dropoff_user_id,
+            de.received_contact_name AS dropoff_contact,
+            de.actual_receive_time AS dropoff_time,
+            de.received_weight_kg,
+
+            CASE
+                WHEN pe.measured_weight_kg IS NOT NULL
+                    AND de.received_weight_kg IS NOT NULL
+                    AND TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time) > 0
+                THEN
+                    (pe.measured_weight_kg - de.received_weight_kg) /
+                    TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time)
+                ELSE NULL
+            END AS evaporation_rate_kg_per_hour,
+
+
+            ld.company_name,
+            ld.company_address,
+            ld.city,
+            ld.state            
+
+
+    FROM shipping_manifest m
+
+    LEFT JOIN pickup_event pe 
+        ON m.manifest_id = pe.manifest_id
+
+    LEFT JOIN container_weight_event cw 
+        ON m.manifest_id = cw.manifest_id
+
+    LEFT JOIN dropoff_event de 
+        ON m.manifest_id = de.manifest_id
+
+    LEFT JOIN locations lp 
+        ON cw.location_id = lp.id AND cw.weight_type = 'pickup'
+
+    LEFT JOIN locations ld 
+        ON cw.location_id = ld.id AND cw.weight_type = 'dropoff'
+
+    WHERE m.shipper_id = %s
+
+    ORDER BY 
+        m.manifest_id, cw.event_time, pe.weight_measured_at, de.created_at;
     """
 
     cursor.execute(query, (shipper_id,))
     results = cursor.fetchall()
+    # Convert any Decimal fields to float (safely)
+    for result in results:
+        for key, value in result.items():
+            result[key] = decimal_to_float(value)
 
+
+    print(f"results: {results}")
     cursor.close()
     conn.close()
 
@@ -401,4 +461,4 @@ def get_shipper_routes(shipper_id: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

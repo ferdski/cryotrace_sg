@@ -13,6 +13,7 @@ import PickupEventsPage from './pages/PickupEventsPage';
 import DropoffEventsPage from './pages/DropoffEventsPage';
 import TransitShipperTableDate from './components/TransitShipperTableDate';
 import TransitShipperTableLocation from './components/TransitShipperTableLocation';
+import ShipperRoutesPage from './pages/ShipperRoutesPage';
 
 const App = () => {
   return (
@@ -31,6 +32,7 @@ const App = () => {
               <Route path="/transit/location" element={<TransitShipperTableLocation/>} />
               <Route path="/events/pickup-events" element={<PickupEventsPage />} />   
               <Route path="/events/dropoff-events" element={<DropoffEventsPage />} />
+              <Route path="/routes/shipper-routes" element={<ShipperRoutesPage />} />
           </Routes>
         </div>
       </div>
