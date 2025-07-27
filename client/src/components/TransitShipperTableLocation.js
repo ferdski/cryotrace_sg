@@ -26,7 +26,7 @@ function TransitShipperLocation() {
 
   useEffect(() => {
     if (selectedId) {
-      fetch(`${fullUrl}?filter=date&shipperId=${selectedId}`)
+      fetch(`${fullUrl}?filter=location&shipperId=${selectedId}`)
         .then((res) => res.json())
         .then((data) => setRecords(data))
         .catch((err) => {
