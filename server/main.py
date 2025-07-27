@@ -59,7 +59,7 @@ async def ask(request: AskRequest):
         return {"error": str(e)}
 
 @app.get("/api/users")
-def get_containers():
+def get_users():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM Users")

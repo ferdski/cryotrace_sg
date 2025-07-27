@@ -14,6 +14,8 @@ import DropoffEventsPage from './pages/DropoffEventsPage';
 import TransitShipperTableDate from './components/TransitShipperTableDate';
 import TransitShipperTableLocation from './components/TransitShipperTableLocation';
 import ShipperRoutesPage from './pages/ShipperRoutesPage';
+import EvaporationRatePage from './pages/EvaporationRatePage';
+
 
 const App = () => {
   return (
@@ -33,6 +35,7 @@ const App = () => {
               <Route path="/events/pickup-events" element={<PickupEventsPage />} />   
               <Route path="/events/dropoff-events" element={<DropoffEventsPage />} />
               <Route path="/routes/shipper-routes" element={<ShipperRoutesPage />} />
+              <Route path="/routes/evaporation-rates" element={<EvaporationRatePage />} />
           </Routes>
         </div>
       </div>

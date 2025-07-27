@@ -5,7 +5,7 @@ import './ContainersList.css'; // Reuse the styling
 function RenderTransitShipperTableDate({ records }) {
   return (
     <div className="containers-list">
-      <h2>Transit records by Shipper number</h2>
+      <h2>Transit records by ship date</h2>
       <table>
         <thead>
           <tr>

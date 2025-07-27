@@ -29,6 +29,10 @@ function Sidebar() {
     <ul>
       <li><NavLink to="/routes/shipper-routes" activeClassName="active">Shipper Routes</NavLink></li>
     </ul>
+    <ul>
+      <li><NavLink to="/routes/evaporation-rates" activeClassName="active">Evaporation Rates</NavLink></li>
+    </ul>
+
   </li>
 </ul>
   );
