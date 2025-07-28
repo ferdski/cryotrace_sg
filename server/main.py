@@ -6,12 +6,21 @@ from pydantic import BaseModel
 
 import os
 #  api pickup-events
-from fastapi import FastAPI, Query, File, UploadFile, Form, Request
+from fastapi import FastAPI, Query, File, UploadFile, Form, Request, HTTPException, Request
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import shutil
+from openai import OpenAI
+from openai.resources.embeddings import Embeddings
+import weaviate
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 
+# Initialize clients
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+weaviate_client = weaviate.Client("http://localhost:8080")
 
 app = FastAPI()
 
@@ -36,7 +45,7 @@ async def reindex_vectors():
             collection.delete(ids=all_ids)
 
         print("🔄 Reloading and re-embedding from MySQL...")
-        load_or_index_shipments()
+
 
         return {"status": "Reindexing complete."}
     except Exception as e:
@@ -367,7 +376,7 @@ def decimal_to_float(d):
     return d
 
 @app.get("/api/shippers/{shipper_id}/routes")
-def get_shipper_routes(shipper_id: str):
+async def get_shipper_routes(shipper_id: str):
     print(f"\nshipper routes: s_id: {shipper_id}")
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -458,6 +467,97 @@ def get_shipper_routes(shipper_id: str):
 
     return results
 
+
+@app.get("/api/ask-ai")
+async def ask_ai(shipper_id: str):
+    print(f"\nshipper routes: s_id: {shipper_id}")
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+
+# Request schema
+class AskAIRequest(BaseModel):
+    question: str
+    shipper_id: str | None = None
+
+@app.post("/api/ask-ai")
+async def ask_ai(request: AskAIRequest):
+    question = request.question
+    shipper_id = request.shipper_id
+
+    if not question:
+        raise HTTPException(status_code=400, detail="Missing question")
+
+    # 1. Embed question
+    embedding = openai_client.embeddings.create(
+        model="text-embedding-3-small",
+        input=question
+    ).data[0].embedding
+
+    # 2. Query Weaviate
+    query = weaviate_client.query.get("Shipment", ["summary_text"])
+
+    if shipper_id:
+        query = query.with_where({
+            "path": ["shipper_id"],
+            "operator": "Equal",
+            "valueText": shipper_id
+        })
+
+    results = query.with_near_vector({"vector": embedding}).with_limit(5).do()
+    matches = results["data"]["Get"].get("Shipment", [])
+
+    if not matches:
+        return {"answer": "No relevant shipment data found."}
+
+    # 3. Compose RAG prompt
+    summaries = "\n---\n".join([m["summary_text"] for m in matches])
+    prompt = (
+    "You are an assistant helping users understand cryogenic shipment data.\n"
+    "Use the shipment logs below to answer the user's question.\n"
+    "Respond in a clear, structured format with bullet points, timestamps, and numeric values when possible.\n"
+    "Avoid repeating the full context; summarize only relevant points.\n\n"
+    "Shipment Logs:\n"
+    f"{summaries}\n\n"
+    f"Question: {question}\n"
+    "Answer:"
+    )
+
+    print("Prompt to LLM:\n", prompt)
+    # 4. Call LLM
+    response = openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful assistant for analyzing cryogenic shipments.\n"
+                    "You answer questions based on logs and return the response in a clean, structured format using bullet points, timestamps, and numeric values.\n"
+                    "If a field is missing, say 'Unknown'.\n"
+                    "Respond using this format:\n"
+                    "- 📦 Shipper ID: ...\n"
+                    "- 🕒 Pickup Time: ...\n"
+                    "- 📍 Origin: ...\n"
+                    "- ✅ Dropoff Time: ...\n"
+                    "- 📍 Destination: ...\n"
+                    "- 💧 Evaporation Rate: ... kg/hr\n"
+                    "- 📝 Notes: ...\n"
+                )
+            },
+            {
+                "role": "user",
+                "content": (
+                    "Shipment Logs:\n"
+                    f"{summaries}\n\n"
+                    f"Question: {question}\n"
+                    "Answer:"
+                )
+            }
+        ],
+        temperature=0.3
+    )
+
+    return {"answer": response.choices[0].message.content}
 
 
 

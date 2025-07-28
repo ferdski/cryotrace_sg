@@ -10,7 +10,7 @@ import weaviate
 load_dotenv()
 
 # OpenAI client
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_client: OpenAI = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Weaviate client (older syntax)
 weaviate_client = weaviate.Client("http://localhost:8080")

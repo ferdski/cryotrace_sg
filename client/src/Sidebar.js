@@ -32,6 +32,9 @@ function Sidebar() {
     <ul>
       <li><NavLink to="/routes/evaporation-rates" activeClassName="active">Evaporation Rates</NavLink></li>
     </ul>
+    <ul>
+      <li><NavLink to="/routes/ai-chat" activeClassName="active">AI chat</NavLink></li>
+    </ul>
 
   </li>
 </ul>
