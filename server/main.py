@@ -3,7 +3,7 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_connection
 from pydantic import BaseModel
-from chroma_rag import query_gpt_with_rag, load_or_index_shipments, collection
+
 import os
 #  api pickup-events
 from fastapi import FastAPI, Query, File, UploadFile, Form, Request
@@ -396,8 +396,6 @@ def get_shipper_routes(shipper_id: str):
             lp.city,
             lp.state,
 
-            cw.weight_type,
-
             de.received_by_user_id AS dropoff_user_id,
             de.received_contact_name AS dropoff_contact,
             de.actual_receive_time AS dropoff_time,
@@ -420,27 +418,30 @@ def get_shipper_routes(shipper_id: str):
             ld.state            
 
 
-    FROM shipping_manifest m
+            FROM shipping_manifest m
 
-    LEFT JOIN pickup_event pe 
-        ON m.manifest_id = pe.manifest_id
+            LEFT JOIN pickup_event pe 
+                ON m.manifest_id = pe.manifest_id
 
-    LEFT JOIN container_weight_event cw 
-        ON m.manifest_id = cw.manifest_id
+            LEFT JOIN dropoff_event de 
+                ON m.manifest_id = de.manifest_id
 
-    LEFT JOIN dropoff_event de 
-        ON m.manifest_id = de.manifest_id
+            LEFT JOIN container_weight_event cw_pickup 
+                ON m.manifest_id = cw_pickup.manifest_id AND cw_pickup.weight_type = 'pickup'
 
-    LEFT JOIN locations lp 
-        ON cw.location_id = lp.id AND cw.weight_type = 'pickup'
+            LEFT JOIN container_weight_event cw_dropoff 
+                ON m.manifest_id = cw_dropoff.manifest_id AND cw_dropoff.weight_type = 'dropoff'
 
-    LEFT JOIN locations ld 
-        ON cw.location_id = ld.id AND cw.weight_type = 'dropoff'
+            LEFT JOIN locations lp 
+                ON cw_pickup.location_id = lp.id
 
-    WHERE m.shipper_id = %s
+            LEFT JOIN locations ld 
+                ON cw_dropoff.location_id = ld.id
+            
 
-    ORDER BY 
-        m.manifest_id, cw.event_time, pe.weight_measured_at, de.created_at;
+            WHERE m.shipper_id = %s
+
+
     """
 
     cursor.execute(query, (shipper_id,))
