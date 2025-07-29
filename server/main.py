@@ -495,17 +495,56 @@ async def ask_ai(request: AskAIRequest):
     ).data[0].embedding
 
     # 2. Query Weaviate
-    query = weaviate_client.query.get("Shipment", ["summary_text"])
+    fields = [
+    "shipper_id",
+    "pickup_time",
+    "dropoff_time",
+    "evaporation_rate",
+    "summary_text",  ## Always include summary_text for prompt
+    ]
+    query = weaviate_client.query.get("Shipment", fields)
 
+        # 🟢 Use exact match to get all shipments for this shipper
     if shipper_id:
         query = query.with_where({
             "path": ["shipper_id"],
             "operator": "Equal",
             "valueText": shipper_id
-        })
-
-    results = query.with_near_vector({"vector": embedding}).with_limit(5).do()
+        }).with_limit(100)
+    else:  # uyse semantic match for other queries
+        query = query.with_near_vector({
+            "vector": embedding
+        }).with_limit(25)
+    
+    # Run the query
+    results = query.do()
     matches = results["data"]["Get"].get("Shipment", [])
+    print(f"Weaviate DB Found {len(matches)} trips for {shipper_id}")
+    for trip in matches:
+        print(trip)
+
+    # Count number of trips retrieved
+    trip_count = len(matches) # the LLM is having trouble counting the matches in some cases; make it explicit here
+
+    # Shortcut for common numeric queries
+    cleaned_question = question.strip().lower()
+
+    count_patterns = [
+        "how many times has this shipper been in transit?",
+        "how many trips has this shipper been on?",
+        "how many shipments has this shipper completed?",
+        "only show the total number of times it was in transit"
+    ]
+    if any(pattern in cleaned_question for pattern in count_patterns):
+        trip_count = len(matches)
+        return {"answer": f"The shipper has been in transit {trip_count} times."}
+
+    if "in transit" in cleaned_question and "how many" in cleaned_question:
+        trip_count = len(matches)
+        return {"answer": f"The shipper has been in transit {trip_count} times."}
+
+
+    # ... otherwise, fall through to normal LLM prompt generation ...
 
     if not matches:
         return {"answer": "No relevant shipment data found."}
