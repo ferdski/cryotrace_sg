@@ -1,8 +1,12 @@
 # create_weaviate_schema.py
 
 import weaviate
+import uuid
+import hashlib
 
 client = weaviate.Client("http://localhost:8080")
+
+
 
 # Define the schema for "Shipment"
 schema = {
