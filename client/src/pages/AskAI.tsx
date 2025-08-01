@@ -13,6 +13,7 @@ const AskAIPage: React.FC = () => {
     setAnswer('');
 
     try {
+      console.log("url: ", process.env.REACT_APP_API_BASE_URL, question);
       const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/ask-ai`, {
         question,
         shipper_id: shipperId || null
@@ -81,7 +82,7 @@ const AskAIPage: React.FC = () => {
 
           {!Array.isArray(answer) && typeof answer === 'string' && (
             <div className="mt-6 bg-gray-100 p-4 rounded border">
-              <h2 className="font-semibold mb-2">AI Answer:</h2>
+              <h2 className="font-semibold mb-2"></h2>
               <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>{answer}</pre>
             </div>
           )}
