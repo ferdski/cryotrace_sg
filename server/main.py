@@ -1,8 +1,12 @@
+import json
+from typing import Optional
+import re
 import decimal
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from db import get_connection
 from pydantic import BaseModel
+import re
 
 import os
 #  api pickup-events
@@ -32,6 +36,89 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def extract_shipper_id_from_question(question: str) -> str | None:
+    match = re.search(r"(shipper-ln2-\d+-\d{4})", question, re.IGNORECASE)
+    return match.group(1) if match else None
+
+
+filters = {
+    "path": ["shipper_id"],
+    "operator": "Equal",
+    "valueText": "shipper-ln2-20-0007"
+}
+
+def build_where_filter(shipper_id=None, cutoff_date=None):
+    operands = []
+
+    if shipper_id:
+        operands.append({
+            "path": ["shipper_id"],
+            "operator": "Equal",
+            "valueText": shipper_id
+        })
+
+    if cutoff_date:
+        operands.append({
+            "path": ["pickup_time"],
+            "operator": "GreaterThan",
+            "valueDate": cutoff_date + "T00:00:00Z"
+        })
+
+    if not operands:
+        return None
+
+    return operands[0] if len(operands) == 1 else {
+        "operator": "And",
+        "operands": operands
+    }
+
+
+
+def build_filter_query(weaviate_client, field_list: list, filters: dict):
+    query = weaviate_client.query.get("Shipment", field_list)
+    if filters:
+        query = query.with_where(filters)
+    return query.with_limit(100)
+
+
+def build_semantic_query(weaviate_client, field_list: list, embedding: list):
+    return weaviate_client.query.get("Shipment", field_list) \
+        .with_near_vector({"vector": embedding}) \
+        .with_limit(25)
+
+def build_hybrid_query(weaviate_client, field_list: list, embedding: list, filters: dict):
+    return weaviate_client.query.get("Shipment", field_list) \
+        .with_near_vector({"vector": embedding}) \
+        .with_where(filters) \
+        .with_limit(50)
+
+def determine_query_mode(question: str) -> str:
+    """
+    Decide if the user question should be handled via:
+    - 'filter': structured where-clause
+    - 'semantic': vector similarity
+    - 'hybrid': combine both
+    """
+    question = question.lower()
+
+    # Structured identifiers
+    if re.search(r"shipper-ln2-\d{2}-\d{4}", question):
+        return "filter"
+    if "manifest id" in question or re.search(r"man-\d{6}", question, re.IGNORECASE):
+        return "filter"
+
+    # Numeric or time-based filtering
+    if any(term in question for term in ["greater than", "less than", "more than", "before", "after", "between"]):
+        return "filter"
+
+    # Location or contact-based semantics + inference
+    if any(term in question for term in ["who", "which", "where", "longest", "shortest", "evaporation", "contact", "trip"]):
+        return "semantic"
+
+    # Fallback to hybrid if ambiguous
+    return "hybrid"
+
 
 # ✅ POST /api/reindex – clear & reload vector DB from MySQL
 @app.post("/api/reindex")
@@ -246,7 +333,7 @@ async def create_pickup_event(
 
         # Save file to disk
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image_path.filename, buffer)
+            shutil.copyfileobj(photo.file, buffer)
 
         # Store pickup record in the database
         conn = get_connection()
@@ -259,7 +346,7 @@ async def create_pickup_event(
                 actual_departure_at,
                 driver_user_id,
                 image_path,
-                notes.
+                notes,
                 created_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
@@ -286,10 +373,10 @@ async def create_pickup_event(
 UPLOAD_DIR = "uploads/dropoff_photos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-'''async def create_dropoff_event(request: Request):
-    form = await request.form()
-    print("🔍 Form keys received:", list(form.keys()))
-    print("🔍 Form values:", dict(form)) '''
+# async def create_dropoff_event(request: Request):
+#     form = await request.form()
+#     print("🔍 Form keys received:", list(form.keys()))
+#     print("🔍 Form values:", dict(form))
 
 @app.post("/api/dropoff-events")
 async def create_dropoff_event(
@@ -468,11 +555,11 @@ async def get_shipper_routes(shipper_id: str):
     return results
 
 
-@app.get("/api/ask-ai")
-async def ask_ai(shipper_id: str):
-    print(f"\nshipper routes: s_id: {shipper_id}")
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+# @app.get("/api/ask-ai")
+# async def ask_ai(shipper_id: str):
+#     print(f"\nshipper routes: s_id: {shipper_id}")
+#     conn = get_connection()
+#     cursor = conn.cursor(dictionary=True)
 
 
 # Request schema
@@ -480,125 +567,82 @@ class AskAIRequest(BaseModel):
     question: str
     shipper_id: str | None = None
 
+
+
+
 @app.post("/api/ask-ai")
-async def ask_ai(request: AskAIRequest):
-    question = request.question
-    shipper_id = request.shipper_id
+async def ask_ai(req: AskAIRequest):
+    question = req.question
+    shipper_id = req.shipper_id
+    from cryotrace_ai_class import CryoTraceAI
+    from utils import extract_cutoff_date_from_question
+    from utils import format_shipments_for_prompt
+    from openai import OpenAI
+    import weaviate
 
-    if not question:
-        raise HTTPException(status_code=400, detail="Missing question")
+    weaviate_client = weaviate.Client("http://localhost:8080")
+    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    # 1. Embed question
-    embedding = openai_client.embeddings.create(
-        model="text-embedding-3-small",
-        input=question
-    ).data[0].embedding
-
-    # 2. Query Weaviate
     fields = [
-    "shipper_id",
-    "pickup_time",
-    "dropoff_time",
-    "evaporation_rate",
-    "summary_text",  ## Always include summary_text for prompt
+        "shipper_id", "manifest_id", "origin", "origin_contact",
+        "destination", "destination_contact", "pickup_time", "dropoff_time",
+        "pickup_weight", "dropoff_weight", "evaporation_rate",
+        "scheduled_ship_time", "expected_receive_time", "summary_text"
     ]
-    query = weaviate_client.query.get("Shipment", fields)
 
-        # 🟢 Use exact match to get all shipments for this shipper
-    if shipper_id:
-        query = query.with_where({
-            "path": ["shipper_id"],
-            "operator": "Equal",
-            "valueText": shipper_id
-        }).with_limit(100)
-    else:  # uyse semantic match for other queries
-        query = query.with_near_vector({
-            "vector": embedding
-        }).with_limit(25)
-    
-    # Run the query
-    results = query.do()
+    # Extract date if possible from the user’s question
+    cutoff_date = extract_cutoff_date_from_question(question)
+    print("🕵️ Parsed cutoff date:", cutoff_date)
+
+    mode = determine_query_mode(question)
+    filters = build_where_filter(shipper_id=shipper_id, cutoff_date=cutoff_date)    
+    print("🔍 Final Weaviate filters:", filters)
+
+    if mode == "filter":
+        results = build_filter_query(weaviate_client, fields, filters).do()
+    elif mode == "semantic":
+        embedding = openai_client.embeddings.create(
+            model="text-embedding-3-small", input=question
+        ).data[0].embedding
+        results = build_semantic_query(weaviate_client, fields, embedding).do()
+    else:
+        embedding = openai_client.embeddings.create(
+            model="text-embedding-3-small", input=question
+        ).data[0].embedding
+        results = build_hybrid_query(weaviate_client, fields, embedding, filters).do()
+
     matches = results["data"]["Get"].get("Shipment", [])
-    print(f"Weaviate DB Found {len(matches)} trips for {shipper_id}")
-    for trip in matches:
-        print(trip)
+    #shipment_logs = [entry["summary_text"] for entry in matches]
+    shipment_logs = [entry for entry in matches if entry.get("shipper_id") == shipper_id]
 
-    # Count number of trips retrieved
-    trip_count = len(matches) # the LLM is having trouble counting the matches in some cases; make it explicit here
+    # Create analyzer with that cutoff
+    analyzer = CryoTraceAI(openai_client, cutoff_date=cutoff_date)
+   
 
-    # Shortcut for common numeric queries
-    cleaned_question = question.strip().lower()
+    shipments = analyzer.analyze_shipments(shipment_logs)
+    print(f"🧪 {len(shipment_logs)} logs returned from Weaviate")
+    for log in shipment_logs:
+        print("------")
+        print(log)
 
-    count_patterns = [
-        "how many times has this shipper been in transit?",
-        "how many trips has this shipper been on?",
-        "how many shipments has this shipper completed?",
-        "only show the total number of times it was in transit"
-    ]
-    if any(pattern in cleaned_question for pattern in count_patterns):
-        trip_count = len(matches)
-        return {"answer": f"The shipper has been in transit {trip_count} times."}
+    prompt = f"""You are an assistant helping users interpret cryogenic shipment data.
 
-    if "in transit" in cleaned_question and "how many" in cleaned_question:
-        trip_count = len(matches)
-        return {"answer": f"The shipper has been in transit {trip_count} times."}
+            Use the logs below to answer the user's question. Provide a clear and structured response with bullet points, timestamps, names, and numeric values when possible.
+            Only base your answer on the shipment logs provided. Do not infer or speculate beyond them.
+            If the question is unclear or outside the scope of the shipment logs, respond with: "The provided shipment data does not contain enough information to answer that."
+            Shipment Logs:
+            {format_shipments_for_prompt(shipments)}
 
+            User Question:
+            {question}
 
-    # ... otherwise, fall through to normal LLM prompt generation ...
+            Answer:"""
 
-    if not matches:
-        return {"answer": "No relevant shipment data found."}
-
-    # 3. Compose RAG prompt
-    summaries = "\n---\n".join([m["summary_text"] for m in matches])
-    prompt = (
-    "You are an assistant helping users understand cryogenic shipment data.\n"
-    "Use the shipment logs below to answer the user's question.\n"
-    "Respond in a clear, structured format with bullet points, timestamps, and numeric values when possible.\n"
-    "Avoid repeating the full context; summarize only relevant points.\n\n"
-    "Shipment Logs:\n"
-    f"{summaries}\n\n"
-    f"Question: {question}\n"
-    "Answer:"
-    )
-
-    print("Prompt to LLM:\n", prompt)
-    # 4. Call LLM
-    response = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a helpful assistant for analyzing cryogenic shipments.\n"
-                    "You answer questions based on logs and return the response in a clean, structured format using bullet points, timestamps, and numeric values.\n"
-                    "If a field is missing, say 'Unknown'.\n"
-                    "Respond using this format:\n"
-                    "- 📦 Shipper ID: ...\n"
-                    "- 🕒 Pickup Time: ...\n"
-                    "- 📍 Origin: ...\n"
-                    "- ✅ Dropoff Time: ...\n"
-                    "- 📍 Destination: ...\n"
-                    "- 💧 Evaporation Rate: ... kg/hr\n"
-                    "- 📝 Notes: ...\n"
-                )
-            },
-            {
-                "role": "user",
-                "content": (
-                    "Shipment Logs:\n"
-                    f"{summaries}\n\n"
-                    f"Question: {question}\n"
-                    "Answer:"
-                )
-            }
-        ],
-        temperature=0.3
-    )
-
-    return {"answer": response.choices[0].message.content}
-
-
+                
+    return {
+        "shipments": shipments,
+        "count": len(shipments)
+    }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
