@@ -1,32 +1,42 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { PackageCheck, PackageOpen } from 'lucide-react';
+import { Truck, CheckCircle } from 'lucide-react';
 
 const AskAIPage: React.FC = () => {
   const [shipperId, setShipperId] = useState('');
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [count, setCount] = useState<number | null>(null);
+  const [shipments, setShipments] = useState<any[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setAnswer('');
-
+    setAnswer('💭 Analyzing shipments...');
+  
     try {
-      console.log("url: ", process.env.REACT_APP_API_BASE_URL, question);
       const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/ask-ai`, {
         question,
-        shipper_id: shipperId || null
+        shipper_id: shipperId || null,
       });
-
-      setAnswer(response.data.answer);
+  
+      const { ai_response, shipments, count } = response.data;
+  
+      setAnswer(ai_response || '⚠️ No AI response returned.');
+      setShipments(shipments || []);
+      setCount(count ?? null);
+  
     } catch (err) {
       setAnswer('⚠️ Error retrieving answer from server.');
       console.error(err);
     }
-
+  
     setLoading(false);
   };
+  
+  
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -79,6 +89,53 @@ const AskAIPage: React.FC = () => {
               ))}
             </div>
           )}
+
+
+          {shipments.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-2">Shipment Logs</h3>
+              <div className="overflow-x-auto border rounded shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="bg-gray-50 text-left">
+                  <tr>
+                    <th className="px-4 py-2 font-medium text-gray-700">ID</th>
+                    <th className="px-4 py-2 font-medium text-gray-700">
+                      <div className="flex items-center gap-1">
+                        <Truck className="w-4 h-4" /> Pickup
+                      </div>
+                    </th>
+                    <th className="px-4 py-2 font-medium text-gray-700">
+                      <div className="flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" /> Dropoff
+                      </div>
+                    </th>
+                    <th className="px-4 py-2 font-medium text-gray-700">Transit Time</th>
+                    <th className="px-4 py-2 font-medium text-gray-700">Evap Rate</th>
+                  </tr>
+                </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {shipments.map((s, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 font-medium text-blue-700">{s.shipment_id}</td>
+                        <td className="px-4 py-2 text-gray-800">
+                          <div>{s.pickup_time}</div>
+                          <div className="text-gray-500 text-xs">{s.pickup_contact}</div>
+                        </td>
+                        <td className="px-4 py-2 text-gray-800">
+                          <div>{s.delivery_time}</div>
+                          <div className="text-gray-500 text-xs">{s.receiver}</div>
+                        </td>
+                        <td className="px-4 py-2 text-gray-800">{s.transit_time_hours} hrs</td>
+                        <td className="px-4 py-2 text-gray-800">{s.evaporation_rate_kg_per_hour} kg/hr</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+        
 
           {!Array.isArray(answer) && typeof answer === 'string' && (
             <div className="mt-6 bg-gray-100 p-4 rounded border">
