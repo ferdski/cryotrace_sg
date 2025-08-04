@@ -569,6 +569,47 @@ from openai import OpenAI
 import weaviate
 import os
 
+def build_final_prompt(shipments: list[dict], question: str, shipper_id: str) -> str:
+    if not shipments:
+        return ""
+
+    log_count = len(shipments)
+
+    intro = f"""You are an assistant helping users interpret cryogenic shipment data.
+
+You are given {log_count} shipment logs for shipper ID {shipper_id}.
+Each log includes:
+- shipment ID
+- pickup time and contact
+- delivery time and receiver
+- transit time in hours
+- evaporation rate in kg/hour
+
+You must evaluate all logs individually. Do not skip or summarize entries unless explicitly requested."""
+
+    logs = "\n\n".join(
+        f"""- ID: {s['shipment_id']}
+  Pickup: {s['pickup_time']} by {s['pickup_contact']}
+  Dropoff: {s['delivery_time']} to {s['receiver']}
+  Transit Time (hrs): {s['transit_time_hours']}
+  Evap Rate: {s['evaporation_rate_kg_per_hour']} kg/hr"""
+        for s in shipments
+    )
+
+    return f"""{intro}
+
+Shipment Logs:
+{logs}
+
+---
+
+User Question:
+{question}
+
+Answer:"""
+
+
+
 class AskAIRequest(BaseModel):
     question: str
     shipper_id: str | None = None
@@ -622,7 +663,20 @@ async def ask_ai(request: Request):
             results = build_hybrid_query(weaviate_client, fields, embedding, filters).do()
 
     matches = results["data"]["Get"].get("Shipment", [])
-    shipment_logs = [entry for entry in matches if entry.get("shipper_id") == shipper_id]
+    # de-duplicate entries
+    seen = set()
+    unique_shipments = []
+
+    for entry in matches:
+        key = (entry.get("manifest_id"), entry.get("pickup_time"))
+        if key not in seen:
+            seen.add(key)
+            unique_shipments.append(entry)
+
+    print(f"🧹 Deduplicated: {len(matches)} → {len(unique_shipments)} unique shipments")
+
+    
+    shipment_logs = [entry for entry in unique_shipments if entry.get("shipper_id") == shipper_id]
 
 
     # Analyze and generate prompt
@@ -632,30 +686,16 @@ async def ask_ai(request: Request):
         print("📦 Checking:", s.get("manifest_id"), s.get("pickup_time"))
 
     cutoff_line = ""
+    formatted = ""
     if cutoff_date and direction in {"before", "after"}:
         formatted = cutoff_date.strftime("%Y-%m-%d %H:%M:%S UTC")
         cutoff_line = f"Only include shipments with pickup time {direction} {formatted}."
 
-    final_prompt = f"""
-You are an assistant helping users interpret cryogenic shipment data. Each log refers to a shipment associated with a shipper (ID shipper_id).
-manifest_id is associated with each shipper_id to document the transit of each shipper.
-{cutoff_line}
 
-Use the logs below to answer the user's question. Provide a clear and structured response with bullet points, timestamps, names, and numeric values when possible.
-Only base your answer on the shipment logs provided...
-
-All of the following shipments are associated with shipper ID {shipper_id}.
-Shipment Logs:
-{format_shipments_brief(shipments)}
-
-
-User Question:
-{question}
-
-Answer:
-""".strip()
     # Generate answer using GPT
-    
+
+    final_prompt = build_final_prompt(shipments, question, shipper_id)
+        
     try:
         print(f"📏 Prompt length: {len(final_prompt)} characters")
         print("🧾 FINAL PROMPT:\n", final_prompt)
@@ -663,6 +703,7 @@ Answer:
         start_time = time.time()
         ai_response = analyzer._call_model(final_prompt, model="gpt-3.5-turbo")
         duration = time.time() - start_time
+        print("response: ", ai_response)
         print(f"🕒 GPT-3.5 turbo response time: {duration:.2f} seconds")
         
         # If 3.5 fails or gives a fallback message, try GPT-4
@@ -673,7 +714,7 @@ Answer:
             duration = time.time() - start_time
             print(f"🕒 GPT-4 response time: {duration:.2f} seconds")
             print("response: ", ai_response)
-    
+
     except Exception as e:
         print("❌ Error generating AI response:", e)
         ai_response = "The AI failed to generate a response."
