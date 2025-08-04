@@ -30,27 +30,31 @@ class CryoTraceAI:
             print(f"⚠️ Failed with {model}. Error:", e)
             return None
 
-
     @staticmethod
     def parse_cutoff_date_and_direction(prompt: str) -> Tuple[Optional[datetime], str]:
+        import re
+        from dateutil import parser
+
         prompt_lower = prompt.lower()
 
-        if "before" in prompt_lower:
-            direction = "before"
-        elif "after" in prompt_lower:
+        if "after" in prompt_lower or "since" in prompt_lower:
             direction = "after"
+        elif "before" in prompt_lower or "prior to" in prompt_lower:
+            direction = "before"
         else:
             direction = "all"
 
-        match = re.search(r"\b(20\d{2}-\d{2}-\d{2})\b", prompt)
+        # Match YYYY-MM-DD optionally followed by time
+        match = re.search(r"(20\d{2}-\d{2}-\d{2}(?:[ Tt]\d{2}:\d{2}(?::\d{2})?)?)", prompt)
         if match:
             try:
-                cutoff = datetime.strptime(match.group(1), "%Y-%m-%d")
+                cutoff = parser.parse(match.group(1))
                 return cutoff, direction
-            except ValueError:
-                pass
+            except Exception as e:
+                print("❌ Failed to parse date:", e)
 
         return None, direction
+
 
     def _filter_logs_by_date(self, raw_logs: list[str]) -> list[str]:
         if not self.cutoff_dt:
