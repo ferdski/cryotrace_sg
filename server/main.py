@@ -1,3 +1,4 @@
+import time
 import json
 from typing import Optional
 import re
@@ -18,6 +19,8 @@ from openai import OpenAI
 from openai.resources.embeddings import Embeddings
 import weaviate
 from dotenv import load_dotenv
+from utils import format_shipments_for_prompt, format_shipments_brief, compute_evaporation_volume
+
 
 # Load environment variables
 load_dotenv()
@@ -48,32 +51,20 @@ filters = {
     "valueText": "shipper-ln2-20-0007"
 }
 
-def build_where_filter(shipper_id=None, cutoff_date=None):
-    operands = []
+def build_where_filter(shipper_id: str, cutoff_date: Optional[datetime] = None, direction: str = "after") -> dict:
+    operands = [
+        {"path": ["shipper_id"], "operator": "Equal", "valueText": shipper_id}
+    ]
 
-    if shipper_id:
-        operands.append({
-            "path": ["shipper_id"],
-            "operator": "Equal",
-            "valueText": shipper_id
-        })
-
-    if cutoff_date:
+    if cutoff_date is not None and direction in {"before", "after"}:
+        operator = "GreaterThan" if direction == "after" else "LessThan"
         operands.append({
             "path": ["pickup_time"],
-            "operator": "GreaterThan",
-            "valueDate": cutoff_date + "T00:00:00Z"
+            "operator": operator,
+            "valueDate": cutoff_date.isoformat() + "Z"
         })
 
-    if not operands:
-        return None
-
-    return operands[0] if len(operands) == 1 else {
-        "operator": "And",
-        "operands": operands
-    }
-
-
+    return {"operator": "And", "operands": operands}
 
 def build_filter_query(weaviate_client, field_list: list, filters: dict):
     query = weaviate_client.query.get("Shipment", field_list)
@@ -570,19 +561,32 @@ class AskAIRequest(BaseModel):
 
 
 
-@app.post("/api/ask-ai")
-async def ask_ai(req: AskAIRequest):
-    question = req.question
-    shipper_id = req.shipper_id
-    from cryotrace_ai_class import CryoTraceAI
-    from utils import extract_cutoff_date_from_question
-    from utils import format_shipments_for_prompt
-    from openai import OpenAI
-    import weaviate
+from fastapi import Request
+from pydantic import BaseModel
+from cryotrace_ai_class import CryoTraceAI
 
+from openai import OpenAI
+import weaviate
+import os
+
+class AskAIRequest(BaseModel):
+    question: str
+    shipper_id: str | None = None
+
+@app.post("/api/ask-ai")
+async def ask_ai(request: Request):
+    body = await request.json()
+    question = body.get("prompt") or body.get("question")
+    shipper_id = body.get("shipper_id")
+
+    if not question or not shipper_id:
+        return {"error": "Missing 'prompt' or 'shipper_id'"}
+
+    # Initialize clients
     weaviate_client = weaviate.Client("http://localhost:8080")
     openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+    # Fields to retrieve
     fields = [
         "shipper_id", "manifest_id", "origin", "origin_contact",
         "destination", "destination_contact", "pickup_time", "dropoff_time",
@@ -590,59 +594,98 @@ async def ask_ai(req: AskAIRequest):
         "scheduled_ship_time", "expected_receive_time", "summary_text"
     ]
 
-    # Extract date if possible from the user’s question
-    cutoff_date = extract_cutoff_date_from_question(question)
-    print("🕵️ Parsed cutoff date:", cutoff_date)
+    # Parse filter conditions
+    cutoff_date, direction = CryoTraceAI.parse_cutoff_date_and_direction(question)
+    print(f"🕵️ Parsed: shipper_id={shipper_id}, direction={direction}, cutoff_date={cutoff_date}")
 
+    try:
+        filters = build_where_filter(shipper_id=shipper_id, cutoff_date=cutoff_date, direction=direction)
+    except Exception as e:
+        print(f"⚠️ Error building filters: {e}")
+        filters = {"path": ["shipper_id"], "operator": "Equal", "valueText": shipper_id}
+
+    # Determine query mode
     mode = determine_query_mode(question)
-    filters = build_where_filter(shipper_id=shipper_id, cutoff_date=cutoff_date)    
-    print("🔍 Final Weaviate filters:", filters)
+    print("🔍 Query mode:", mode)
 
+    # Run query
     if mode == "filter":
         results = build_filter_query(weaviate_client, fields, filters).do()
-    elif mode == "semantic":
-        embedding = openai_client.embeddings.create(
-            model="text-embedding-3-small", input=question
-        ).data[0].embedding
-        results = build_semantic_query(weaviate_client, fields, embedding).do()
     else:
         embedding = openai_client.embeddings.create(
             model="text-embedding-3-small", input=question
         ).data[0].embedding
-        results = build_hybrid_query(weaviate_client, fields, embedding, filters).do()
+
+        if mode == "semantic":
+            results = build_semantic_query(weaviate_client, fields, embedding).do()
+        else:
+            results = build_hybrid_query(weaviate_client, fields, embedding, filters).do()
 
     matches = results["data"]["Get"].get("Shipment", [])
-    #shipment_logs = [entry["summary_text"] for entry in matches]
     shipment_logs = [entry for entry in matches if entry.get("shipper_id") == shipper_id]
 
-    # Create analyzer with that cutoff
+
+    # Analyze and generate prompt
     analyzer = CryoTraceAI(openai_client, cutoff_date=cutoff_date)
-   
-
     shipments = analyzer.analyze_shipments(shipment_logs)
-    print(f"🧪 {len(shipment_logs)} logs returned from Weaviate")
-    for log in shipment_logs:
-        print("------")
-        print(log)
+    for s in shipments:
+        print("📦 Checking:", s.get("manifest_id"), s.get("pickup_time"))
 
-    prompt = f"""You are an assistant helping users interpret cryogenic shipment data.
+    cutoff_line = ""
+    if cutoff_date and direction in {"before", "after"}:
+        formatted = cutoff_date.strftime("%Y-%m-%d %H:%M:%S UTC")
+        cutoff_line = f"Only include shipments with pickup time {direction} {formatted}."
 
-            Use the logs below to answer the user's question. Provide a clear and structured response with bullet points, timestamps, names, and numeric values when possible.
-            Only base your answer on the shipment logs provided. Do not infer or speculate beyond them.
-            If the question is unclear or outside the scope of the shipment logs, respond with: "The provided shipment data does not contain enough information to answer that."
-            Shipment Logs:
-            {format_shipments_for_prompt(shipments)}
+    final_prompt = f"""
+You are an assistant helping users interpret cryogenic shipment data. Each log refers to a shipment associated with a shipper (ID shipper_id).
+manifest_id is associated with each shipper_id to document the transit of each shipper.
+{cutoff_line}
 
-            User Question:
-            {question}
+Use the logs below to answer the user's question. Provide a clear and structured response with bullet points, timestamps, names, and numeric values when possible.
+Only base your answer on the shipment logs provided...
 
-            Answer:"""
+All of the following shipments are associated with shipper ID {shipper_id}.
+Shipment Logs:
+{format_shipments_brief(shipments)}
 
-                
+
+User Question:
+{question}
+
+Answer:
+""".strip()
+    # Generate answer using GPT
+    
+    try:
+        print(f"📏 Prompt length: {len(final_prompt)} characters")
+        print("🧾 FINAL PROMPT:\n", final_prompt)
+        
+        start_time = time.time()
+        ai_response = analyzer._call_model(final_prompt, model="gpt-3.5-turbo")
+        duration = time.time() - start_time
+        print(f"🕒 GPT-3.5 turbo response time: {duration:.2f} seconds")
+        
+        # If 3.5 fails or gives a fallback message, try GPT-4
+        if not ai_response or "does not contain enough information" in ai_response:
+            print("↩️ Falling back to GPT-4")
+            start_time = time.time()
+            ai_response = analyzer._call_model(final_prompt, model="gpt-3.5-turbo")
+            duration = time.time() - start_time
+            print(f"🕒 GPT-4 response time: {duration:.2f} seconds")
+            print("response: ", ai_response)
+    
+    except Exception as e:
+        print("❌ Error generating AI response:", e)
+        ai_response = "The AI failed to generate a response."
+        print("response: ", ai_response)
+
+
     return {
         "shipments": shipments,
-        "count": len(shipments)
+        "count": len(shipments),
+        "ai_response": ai_response
     }
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
