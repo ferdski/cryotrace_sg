@@ -113,7 +113,7 @@ class CryoTraceAI:
             print("⚠️ JSON decode failed. Raw response:\n", raw_response)
             return []
 
-    def analyze_shipments(self, shipment_logs):
+    def analyze_shipments(self, shipment_logs, direction):
         filtered = []
         for s in shipment_logs:
             pickup_time_str = s.get("pickup_time")
@@ -125,9 +125,14 @@ class CryoTraceAI:
             except ValueError:
                 continue
 
-            if self.cutoff_dt and pickup_dt < self.cutoff_dt:
-                continue
-
+            if direction == 'before':
+                if self.cutoff_dt and pickup_dt > self.cutoff_dt:
+                    continue
+            elif direction == 'after':
+                 if self.cutoff_dt and pickup_dt < self.cutoff_dt:
+                    continue   
+       
+            # if no before or after, then include this record
             transit_time = format_hours_minutes((datetime.strptime(s['dropoff_time'] , "%Y-%m-%dT%H:%M:%SZ") - \
                 datetime.strptime(s['pickup_time'], "%Y-%m-%dT%H:%M:%SZ")).seconds)
 

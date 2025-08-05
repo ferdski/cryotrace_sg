@@ -14,7 +14,7 @@ function Sidebar() {
     <span>Shippers by Manifest</span>
     <ul className="submenu">
       <li><Link to="/manifests/date">By date</Link></li>
-      <li><Link to="/manifests/location">By location</Link></li>
+      <li><Link to="/manifests/location">By Origin</Link></li>
     </ul>
     <span>Shippers by Transit</span>
     <ul className="submenu">
