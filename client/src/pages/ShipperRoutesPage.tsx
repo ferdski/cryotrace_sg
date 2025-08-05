@@ -83,7 +83,6 @@ export default function ShipperRouteViewer() {
                       <div className="grid md:grid-cols-2 gap-4">
                         {renderField("Scheduled Ship Time", formatDate(entry.scheduled_ship_time))}
                         {renderField("Expected Receive Time", formatDate(entry.expected_receive_time))}
-                        {renderField("Evaporation Rate", `${entry.evaporation_rate_kg_per_hour || "N/A"} kg/hr`)}
                       </div>
                     </div>
 

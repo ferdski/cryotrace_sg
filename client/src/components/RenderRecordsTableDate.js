@@ -5,14 +5,14 @@ import './ContainersList.css'; // Reuse the styling
 function RenderRecordsTableDate({ records }) {
   return (
     <div className="containers-list">
-      <h2>Manifest Records By Scheduled Ship date</h2>
+      <h2>Manifest Records For this Shipper By Scheduled Ship date</h2>
       <table>
         <thead>
           <tr>
-          <th>Manifest ID</th>
+          <th>Scheduled ship date/time</th>
+            <th>Manifest ID</th>
             <th>Manifest Created time</th>
             <th>Shipper ID</th>
-            <th>Scheduled ship date/time</th>
             <th>Origin</th>
             <th>Destination</th>
             <th>Expected Weight (kg)</th>
@@ -24,10 +24,10 @@ function RenderRecordsTableDate({ records }) {
         <tbody>
           {records.map(record => (
             <tr key={record.record_id}>
+              <td>{new Date(record.scheduled_ship_time).toLocaleString()}</td>              
               <td>{record.manifest_id}</td>
               <td>{new Date(record.created_at).toLocaleString()}</td>
               <td>{record.shipper_id}</td>
-              <td>{new Date(record.scheduled_ship_time).toLocaleString()}</td>
               <td>{record.origin}</td>
               <td>{record.destination}</td>
               <td>{parseFloat(record.projected_weight_kg).toFixed(1)}</td>

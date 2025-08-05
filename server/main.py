@@ -177,22 +177,79 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
         #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
         #""", (shipperId,))
         cursor.execute("""
-        SELECT 
-            sm.manifest_id,
-            sm.created_at,
-            sm.shipper_id,
-            sm.scheduled_ship_time,
-            CONCAT(lo.city, ', ', lo.state) AS origin,
-            CONCAT(ld.city, ', ', ld.state) AS destination,
-            sm.projected_weight_kg,
-            sm.created_by_user_id,
-            sm.notes
-            FROM shipping_manifest sm
-            JOIN locations lo ON sm.origin_location_id = lo.id
-            JOIN locations ld ON sm.destination_location_id = ld.id   
-            WHERE sm.shipper_id = %s
-            ORDER BY sm.scheduled_ship_time DESC              
-        """, (shipperId,))
+        SELECT
+            m.manifest_id,
+            m.shipper_id,
+            CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ',  lp.state) as origin, 
+            CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) as destination,
+            m.scheduled_ship_time,
+            m.expected_receive_time,
+            m.created_at,
+
+            m.origin_contact_name AS pickup_contact,            
+            pe.actual_departure_at AS pickup_time,
+            pe.driver_user_id AS pickup_user_id,
+            pe.measured_weight_kg AS pickup_weight,
+            
+            de.received_weight_kg,
+            
+            de.actual_receive_time AS dropoff_time,
+            de.received_by_user_id  AS dropoff_contact,
+            m.destination_contact_name AS contact_name,
+            m.notes AS dropoff_notes,
+
+            lp.company_name,
+            lp.company_address,
+            lp.city,
+            lp.state,
+
+            de.received_by_user_id AS dropoff_user_id,
+            de.received_contact_name AS dropoff_contact,
+            de.actual_receive_time AS dropoff_time,
+            de.received_weight_kg AS dropoff_weight,
+
+
+            CASE
+                WHEN pe.measured_weight_kg IS NOT NULL
+                    AND de.received_weight_kg IS NOT NULL
+                    AND TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time) > 0
+                THEN
+                    (pe.measured_weight_kg - de.received_weight_kg) /
+                    TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time)
+                ELSE NULL
+            END AS evaporation_rate_kg_per_hour,
+
+
+            ld.company_name,
+            ld.company_address,
+            ld.city,
+            ld.state            
+
+
+            FROM shipping_manifest m
+
+            LEFT JOIN pickup_event pe 
+                ON m.manifest_id = pe.manifest_id
+
+            LEFT JOIN dropoff_event de 
+                ON m.manifest_id = de.manifest_id
+
+            LEFT JOIN container_weight_event cw_pickup 
+                ON m.manifest_id = cw_pickup.manifest_id AND cw_pickup.weight_type = 'pickup'
+
+            LEFT JOIN container_weight_event cw_dropoff 
+                ON m.manifest_id = cw_dropoff.manifest_id AND cw_dropoff.weight_type = 'dropoff'
+
+            LEFT JOIN locations lp 
+                ON cw_pickup.location_id = lp.id
+
+            LEFT JOIN locations ld 
+                ON cw_dropoff.location_id = ld.id
+
+            WHERE m.shipper_id = %s
+            ORDER BY pickup_time DESC
+
+    """, (shipperId,))
     elif filter == "manifestid" and shipperId:
         #cursor.execute("""
         #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
@@ -202,6 +259,7 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
             sm.manifest_id,
             sm.created_at,
             sm.shipper_id,
+            sm.projected_weight_kg,
             sm.scheduled_ship_time,
             CONCAT(lo.city, ', ', lo.state) AS origin,
             CONCAT(ld.city, ', ', ld.state) AS destination,
@@ -219,22 +277,78 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
         #SELECT * FROM shipping_manifest WHERE shipper_id = %s ORDER BY scheduled_ship_time
         #""", (shipperId,))
         cursor.execute("""
-        SELECT 
-            sm.manifest_id,
-            sm.created_at,
-            sm.shipper_id,
-            sm.scheduled_ship_time,
-            CONCAT(lo.city, ', ', lo.state) AS origin,
-            CONCAT(ld.city, ', ', ld.state) AS destination,
-            sm.projected_weight_kg,
-            sm.created_by_user_id,
-            sm.notes
-            FROM shipping_manifest sm
-            JOIN locations lo ON sm.origin_location_id = lo.id
-            JOIN locations ld ON sm.destination_location_id = ld.id   
-            WHERE sm.shipper_id = %s                       
-            ORDER BY origin ASC              
-        """, (shipperId,)) 
+        SELECT
+            m.manifest_id,
+            m.shipper_id,
+            CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ',  lp.state) as origin, 
+            CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) as destination,
+            m.scheduled_ship_time,
+            m.expected_receive_time,
+            m.created_at,
+            m.projected_weight_kg,
+            m.origin_contact_name AS pickup_contact,            
+            pe.actual_departure_at AS pickup_time,
+            pe.driver_user_id AS pickup_user_id,
+            pe.measured_weight_kg AS pickup_weight,
+            
+            de.received_weight_kg,
+            
+            de.actual_receive_time AS dropoff_time,
+            de.received_by_user_id  AS dropoff_contact,
+            m.destination_contact_name AS contact_name,
+            m.notes AS dropoff_notes,
+
+            lp.company_name,
+            lp.company_address,
+            lp.city,
+            lp.state,
+
+            de.received_by_user_id AS dropoff_user_id,
+            de.received_contact_name AS dropoff_contact,
+            de.actual_receive_time AS dropoff_time,
+            de.received_weight_kg AS dropoff_weight,
+
+            CASE
+                WHEN pe.measured_weight_kg IS NOT NULL
+                    AND de.received_weight_kg IS NOT NULL
+                    AND TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time) > 0
+                THEN
+                    (pe.measured_weight_kg - de.received_weight_kg) /
+                    TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time)
+                ELSE NULL
+            END AS evaporation_rate_kg_per_hour,
+
+
+            ld.company_name,
+            ld.company_address,
+            ld.city,
+            ld.state            
+
+
+            FROM shipping_manifest m
+
+            LEFT JOIN pickup_event pe 
+                ON m.manifest_id = pe.manifest_id
+
+            LEFT JOIN dropoff_event de 
+                ON m.manifest_id = de.manifest_id
+
+            LEFT JOIN container_weight_event cw_pickup 
+                ON m.manifest_id = cw_pickup.manifest_id AND cw_pickup.weight_type = 'pickup'
+
+            LEFT JOIN container_weight_event cw_dropoff 
+                ON m.manifest_id = cw_dropoff.manifest_id AND cw_dropoff.weight_type = 'dropoff'
+
+            LEFT JOIN locations lp 
+                ON cw_pickup.location_id = lp.id
+
+            LEFT JOIN locations ld 
+                ON cw_dropoff.location_id = ld.id
+
+            WHERE m.shipper_id = %s
+            ORDER BY pickup_time DESC
+
+        """, (shipperId,))
 
     elif filter == "all":
         #cursor.execute("""
@@ -585,7 +699,10 @@ Each log includes:
 - transit time in hours
 - evaporation rate in kg/hour
 
-You must evaluate all logs individually. Do not skip or summarize entries unless explicitly requested."""
+You must evaluate all logs individually. Do not skip or summarize entries unless explicitly requested.
+Present all shipments using the same format, including timestamp, contact name, transit time, and evaporation rate. Use bullet points or numbering consistently.
+
+"""
 
     logs = "\n\n".join(
         f"""- ID: {s['shipment_id']}
@@ -595,6 +712,7 @@ You must evaluate all logs individually. Do not skip or summarize entries unless
   Evap Rate: {s['evaporation_rate_kg_per_hour']} kg/hr"""
         for s in shipments
     )
+  
 
     return f"""{intro}
 
@@ -681,7 +799,7 @@ async def ask_ai(request: Request):
 
     # Analyze and generate prompt
     analyzer = CryoTraceAI(openai_client, cutoff_date=cutoff_date)
-    shipments = analyzer.analyze_shipments(shipment_logs)
+    shipments = analyzer.analyze_shipments(shipment_logs, direction=direction)
     for s in shipments:
         print("📦 Checking:", s.get("manifest_id"), s.get("pickup_time"))
 

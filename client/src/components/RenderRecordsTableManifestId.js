@@ -5,7 +5,7 @@ import './ContainersList.css'; // Reuse the styling
 function RenderRecordsTableManifestId({ records }) {
   return (
     <div className="containers-list">
-      <h2>Manifest Records by Manifest Id</h2>
+      <h2>Manifest Records for this Shipper by Manifest Id</h2>
       <table>
         <thead>
           <tr>
