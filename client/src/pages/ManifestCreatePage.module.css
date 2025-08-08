@@ -1,0 +1,73 @@
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.heading {
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 1rem;       /* Bigger text */
+  color: #111827;        /* Dark gray for contrast */
+  margin-bottom: 0.4rem; /* Space above the input */
+}
+
+
+.req { color: #dc2626; margin-left: 2px; }
+
+.input, .textarea, select {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.row { display: grid; gap: 0.35rem; }
+.rowInline { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.col { display: grid; gap: 0.35rem; }
+
+.textarea { resize: vertical; }
+
+.actions { margin-top: 0.5rem; }
+
+.button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.button:disabled { background: #93c5fd; cursor: not-allowed; }
+
+.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+}
+.success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+}
