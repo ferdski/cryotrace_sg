@@ -12,10 +12,13 @@ import RecordsAll from './components/RecordsAll';
 import PickupEventsPage from './pages/PickupEventsPage';
 import DropoffEventsPage from './pages/DropoffEventsPage';
 import TransitShipperTableDate from './components/TransitShipperTableDate';
+import TransitShipperDropoffTableDate from './components/TransitShipperDropoffTableDate';
 import TransitShipperTableLocation from './components/TransitShipperTableLocation';
+import TransitShipperDropoffTableLocation from './components/TransitShipperDropoffTableLocation';
 import ShipperRoutesPage from './pages/ShipperRoutesPage';
 import EvaporationRatePage from './pages/EvaporationRatePage';
 import AskAiPage from './pages/AskAI';
+import ManifestCreate from './pages/ManifestCreatePage';
 
 const App = () => {
   return (
@@ -26,12 +29,15 @@ const App = () => {
           <Routes>
             <Route path="/users" element={<UsersList />} />
             <Route path="/containers" element={<ContainersList />} />
+              <Route path="/manifests/manifest_id" element={<RecordsByManifestId />} />
+              <Route path="/create-manifest/" element={<ManifestCreate />} />
               <Route path="/manifests/date" element={<RecordsByDate />} />
               <Route path="/manifests/location" element={<RecordsByLocation />} />
-              <Route path="/manifests/manifestid" element={<RecordsByManifestId />} />
               <Route path="/manifests" element={<RecordsAll/>} />
-              <Route path="/transit/date" element={<TransitShipperTableDate/>} />
-              <Route path="/transit/location" element={<TransitShipperTableLocation/>} />
+              <Route path="/transit/pickup-date" element={<TransitShipperTableDate/>} />
+              <Route path="/transit/pickup-location" element={<TransitShipperTableLocation/>} />
+              <Route path="/transit/dropoff-date" element={<TransitShipperDropoffTableDate/>} />
+              <Route path="/transit/dropoff-location" element={<TransitShipperDropoffTableLocation/>} />              
               <Route path="/events/pickup-events" element={<PickupEventsPage />} />   
               <Route path="/events/dropoff-events" element={<DropoffEventsPage />} />
               <Route path="/routes/shipper-routes" element={<ShipperRoutesPage />} />

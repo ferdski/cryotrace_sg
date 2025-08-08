@@ -5,7 +5,7 @@ import './ContainersList.css'; // Reuse the styling
 function RenderTransitShipperTableLocation({ records }) {
   return (
     <div className="containers-list">
-      <h2>Transit Records for this Shipper by Origin </h2>
+      <h2>Transit Records for this Shipper by Date </h2>
       <table>
       <thead>
           <tr>
@@ -13,7 +13,7 @@ function RenderTransitShipperTableLocation({ records }) {
           <th>Manifest ID</th>
             <th>Manifest Created time</th>
             <th>Shipper ID</th>
-            <th>Pickup date/time</th>
+            <th>Expected Pickup time</th>
             <th>Pickup Contact</th>
             <th>Pickup Weight (kg)</th>   
             <th>Dropoff date (kg)</th>            

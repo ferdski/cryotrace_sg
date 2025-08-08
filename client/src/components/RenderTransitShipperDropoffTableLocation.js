@@ -2,14 +2,15 @@
 import React from 'react';
 import './ContainersList.css'; // Reuse the styling
 
-function RenderTransitShipperTableDate({ records }) {
+function RenderTransitShipperDropoffTableLocation({ records }) {
   return (
     <div className="containers-list">
-      <h2>Transit Records for this Shipper by Pickup Date</h2>
+      <h2>Transit Records for this Shipper by Dropoff Date</h2>
       <table>
         <thead>
           <tr>
-          <th>Pickup date/time</th>
+          <th>Destination</th>            
+          <th>Dropoff date/time</th>
           <th>Manifest ID</th>
             <th>Manifest Created time</th>
             <th>Shipper ID</th>
@@ -18,7 +19,6 @@ function RenderTransitShipperTableDate({ records }) {
             <th>Pickup Contact</th>
             <th>Pickup Weight (kg)</th>   
             <th>Dropoff date (kg)</th>            
-            <th>Destination</th>
             <th>Dropoff Contact</th>
             <th>Dropoff Weight (kg)</th>            
             <th>User id</th>
@@ -29,7 +29,8 @@ function RenderTransitShipperTableDate({ records }) {
         <tbody>
           {records.map(record => (
             <tr key={record.record_id}>
-              <td>{new Date(record.pickup_time).toLocaleString()}</td>
+              <td>{record.destination}</td>
+              <td>{new Date(record.dropoff_time).toLocaleString()}</td>
               <td>{record.manifest_id}</td>
               <td>{new Date(record.created_at).toLocaleString()}</td>
               <td>{record.shipper_id}</td>
@@ -37,8 +38,7 @@ function RenderTransitShipperTableDate({ records }) {
               <td>{record.scheduled_ship_time}</td>
               <td>{record.pickup_contact}</td>  
               <td>{parseFloat(record.pickup_weight).toFixed(1)}</td>              
-              <td>{new Date(record.dropoff_time).toLocaleString()}</td>
-              <td>{record.destination}</td>
+              <td>{new Date(record.pickup_time).toLocaleString()}</td>
               <td>{record.dropoff_contact}</td>
               <td>{parseFloat(record.dropoff_weight).toFixed(1)}</td>
               <td>{record.dropoff_user_id}</td>
@@ -58,4 +58,4 @@ function RenderTransitShipperTableDate({ records }) {
   );
 }
 
-export default RenderTransitShipperTableDate;
+export default RenderTransitShipperDropoffTableLocation;

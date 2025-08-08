@@ -145,6 +145,20 @@ async def ask(request: AskRequest):
         print("❌ Error in /api/ask:", repr(e))
         return {"error": str(e)}
 
+
+
+@app.get("/api/locations")
+def get_users():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT * FROM locations")
+    results = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return results
+
+
 @app.get("/api/users")
 def get_users():
     conn = get_connection()
@@ -154,6 +168,7 @@ def get_users():
     cursor.close()
     conn.close()
     return results
+
 
 @app.get("/api/containers")
 def get_containers():
@@ -165,6 +180,7 @@ def get_containers():
     cursor.close()
     conn.close()
     return results
+
 
 @app.get("/api/records")
 def get_records(filter: str = Query(None), shipperId: str = Query(None)):
@@ -384,26 +400,44 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
 def get_manifests(filter: str = Query(None), manifestId: str = Query(None)):
     print(f"get Manifests: {filter}, {manifestId}")
     conn = get_connection()
+    cursor = conn.cursor(dictionary=True)   
     
     if (filter):
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT 
-                sm.manifest_id,
-                sm.shipper_id,
-                sm.origin_location_id,
-                sm.destination_location_id,
-                sm.scheduled_ship_time,
-                sm.expected_receive_time,
-                sm.created_by_user_id,
-                CONCAT(origin.city, ', ', origin.state, ', ', origin.company_name, ' ', origin.company_address) AS origin,
-                CONCAT(dest.city, ', ', dest.state, ', ', dest.company_name, ' ', dest.company_address) AS destination
-            FROM shipping_manifest sm
-            LEFT JOIN locations origin ON sm.origin_location_id = origin.id
-            LEFT JOIN locations dest ON sm.destination_location_id = dest.id
-            WHERE sm.manifest_id = %s
-            ORDER BY sm.manifest_id DESC
-        """, (manifestId,))
+        if filter == 'next-id':
+            cursor.execute("""
+                SELECT
+                    MAX(manifest_id) AS last_id 
+                    FROM shipping_manifest;
+            """)
+            results = cursor.fetchall()[0]
+            last_id = results["last_id"].rsplit('-')[1] or 0
+            next_id = int(last_id) + 1
+            next_id = f"MAN-{next_id:06d}"
+            print("next manifest id = ", next_id)
+            cursor.close()
+            conn.close()
+            return {"res":next_id}
+
+        else:
+
+            cursor.execute("""
+                SELECT 
+                    sm.manifest_id,
+                    sm.shipper_id,
+                    sm.origin_location_id,
+                    sm.destination_location_id,
+                    sm.scheduled_ship_time,
+                    sm.expected_receive_time,
+                    sm.created_by_user_id,
+                    CONCAT(origin.city, ', ', origin.state, ', ', origin.company_name, ' ', origin.company_address) AS origin,
+                    CONCAT(dest.city, ', ', dest.state, ', ', dest.company_name, ' ', dest.company_address) AS destination
+                FROM shipping_manifest sm
+                LEFT JOIN locations origin ON sm.origin_location_id = origin.id
+                LEFT JOIN locations dest ON sm.destination_location_id = dest.id
+                WHERE sm.manifest_id = %s
+                ORDER BY sm.manifest_id DESC
+            """, (manifestId,))
+
     else:
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
@@ -417,8 +451,72 @@ def get_manifests(filter: str = Query(None), manifestId: str = Query(None)):
     conn.close()
     return results
 
+class ManifestCreateRequest(BaseModel):
+    manifest_id: str
+    shipper_id: str
+    location_id: int
+    scheduled_ship_time: datetime
+    expected_receive_time: datetime
+    contact_id: Optional[int] = None
+    notes: Optional[str] = None
+
+@app.post("/api/create-manifest")
+async def create_manifest(request: Request):
+    try:
+        payload = await request.json()
+        manifest_id = payload.get('manifest_id', [])
+        # 1. Check if manifest_id already exists (avoid duplicates)
+        print(f"get Manifest Id: {manifest_id}")
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)   
+
+        # verify that this newly allocated manifest_id isn't already used in the DB
+        query = """
+            SELECT 1
+                FROM shipping_manifest
+                WHERE %s
+                LIMIT 1;
+            """
+        cursor.execute(query, (manifest_id,))
+        results = cursor.fetchall()
+        if results:
+            print("Error: Manifest ID {manifest_id} is already in use")
+            return 
+        print(f"Manifests: {results}")
 
 
+        # 2. Create new manifest object
+        new_manifest = ManifestCreateRequest(
+            manifest_id=payload['manifest_id'],
+            shipper_id=payload['shipper_id'],
+            origin_location_id=payload['origin_location_id'],
+            origin_contact_name=payload['origin_contact_name'],
+            destination_contact_name=payload['destination_contact_name'],
+            scheduled_ship_time=payload['scheduled_ship_time'],
+            expected_receive_time=payload['expected_receive_time'],
+            origin_location_id=payload['origin_location_id'],
+            notes=payload['notes'],
+            created_at=datetime['utcnow()']
+        )
+
+        # 4. Return the created manifest
+        return {
+            "status": "success",
+            "manifest": {
+                "id": new_manifest.id,
+                "manifest_id": new_manifest.manifest_id,
+                "shipper_id": new_manifest.shipper_id,
+                "location_id": new_manifest.location_id,
+                "scheduled_ship_time": new_manifest.scheduled_ship_time,
+                "expected_receive_time": new_manifest.expected_receive_time,
+                "contact_id": new_manifest.contact_id,
+                "notes": new_manifest.notes,
+            }
+        }
+    except Exception as e:
+        print("❌ Dropoff event failed:", e)
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 UPLOAD_DIR = "uploads/pickup_photos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)

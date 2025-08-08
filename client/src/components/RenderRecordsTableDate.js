@@ -37,7 +37,7 @@ function RenderRecordsTableDate({ records }) {
                 {record.image_path ? (
                   <a href={record.image_path} target="_blank" rel="noopener noreferrer">View</a>
                 ) : (
-                  '—'
+                  'image path'
                 )}
               </td>
             </tr>
