@@ -35,7 +35,11 @@
   background-color: #e8f4fd;     /* Soft blue on hover */
 }
 
-.containers-list select {
+/*.containers-list select {
   margin: 10px 0 20px;
   padding: 6px;
+}*/
+.containers-list select {
+  justify-self: start;    /* stop grid stretching */
+  width: max-content;     /* or: width: fit-content; */
 }

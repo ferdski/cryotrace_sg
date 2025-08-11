@@ -454,11 +454,19 @@ def get_manifests(filter: str = Query(None), manifestId: str = Query(None)):
 class ManifestCreateRequest(BaseModel):
     manifest_id: str
     shipper_id: str
-    location_id: int
+    origin_location_id: int
+    origin_contact_name: str
+    destination_location_id: int
+    destination_contact_name: str
     scheduled_ship_time: datetime
     expected_receive_time: datetime
-    contact_id: Optional[int] = None
+    projected_weight_kg: float
+    temperature_c: int
     notes: Optional[str] = None
+    created_by_user_id: int
+    created_at: datetime
+    dev_current_time: datetime
+
 
 @app.post("/api/create-manifest")
 async def create_manifest(request: Request):
@@ -480,6 +488,7 @@ async def create_manifest(request: Request):
             """
         cursor.execute(query, (manifest_id,))
         results = cursor.fetchall()
+        cursor.close()
         if results:
             print("Error: Manifest ID {manifest_id} is already in use")
             return 
@@ -487,36 +496,93 @@ async def create_manifest(request: Request):
 
 
         # 2. Create new manifest object
-        new_manifest = ManifestCreateRequest(
-            manifest_id=payload['manifest_id'],
-            shipper_id=payload['shipper_id'],
-            origin_location_id=payload['origin_location_id'],
-            origin_contact_name=payload['origin_contact_name'],
+        manifest = ManifestCreateRequest(
+            manifest_id=payload['manifest_id'],              
+            shipper_id=payload['shipper_id'],               
+            origin_location_id=payload['origin_location_id'],       
+            origin_contact_name=payload['origin_contact_name'],     
+            destination_location_id=payload['destination_location_id'],  
             destination_contact_name=payload['destination_contact_name'],
-            scheduled_ship_time=payload['scheduled_ship_time'],
-            expected_receive_time=payload['expected_receive_time'],
-            origin_location_id=payload['origin_location_id'],
-            notes=payload['notes'],
-            created_at=datetime['utcnow()']
+            scheduled_ship_time=payload['scheduled_ship_time'],                 
+            expected_receive_time=payload['expected_receive_time'],   
+            projected_weight_kg=payload['projected_weight_kg'],     
+            temperature_c=-196,          
+            notes=payload['notes'],                   
+            created_by_user_id=payload['created_by_user_id'],      
+            created_at=datetime.utcnow(),               
+            dev_current_time =datetime.utcnow()   
         )
+
+        params = {
+            "manifest_id": manifest.manifest_id,
+            "shipper_id": manifest.shipper_id,
+            "origin_location_id": manifest.origin_location_id,
+            "origin_contact_name": manifest.origin_contact_name,
+            "destination_location_id": manifest.destination_location_id,
+            "destination_contact_name": manifest.destination_contact_name,
+            "scheduled_ship_time": manifest.scheduled_ship_time,   # datetime or str acceptable to connector
+            "expected_receive_time": manifest.expected_receive_time,
+            "projected_weight_kg": manifest.projected_weight_kg,
+            "temperature_c": manifest.temperature_c,
+            "notes": getattr(manifest, "notes", None),
+            "created_by_user_id": manifest.created_by_user_id,
+            "created_at": getattr(manifest, "created_at", datetime.utcnow()),
+            "dev_current_time": getattr(manifest, "dev_current_time", datetime.utcnow()),
+        }   
+
+        sql = """
+        INSERT INTO shipping_manifest (
+            manifest_id,
+            shipper_id,
+            origin_location_id,
+            origin_contact_name,
+            destination_location_id,
+            destination_contact_name,
+            scheduled_ship_time,
+            expected_receive_time,
+            projected_weight_kg,
+            temperature_c,
+            notes,
+            created_by_user_id,
+            created_at,
+            dev_current_time
+        ) VALUES (
+            %(manifest_id)s,
+            %(shipper_id)s,
+            %(origin_location_id)s,
+            %(origin_contact_name)s,
+            %(destination_location_id)s,
+            %(destination_contact_name)s,
+            %(scheduled_ship_time)s,
+            %(expected_receive_time)s,
+            %(projected_weight_kg)s,
+            %(temperature_c)s,
+            %(notes)s,
+            %(created_by_user_id)s,
+            %(created_at)s,
+            %(dev_current_time)s
+        )
+        """    
+        cursor = conn.cursor(dictionary=True)            
+        cursor.execute(sql, params)
+        conn.commit()
+        results = cursor.fetchall()
 
         # 4. Return the created manifest
         return {
             "status": "success",
             "manifest": {
-                "id": new_manifest.id,
-                "manifest_id": new_manifest.manifest_id,
-                "shipper_id": new_manifest.shipper_id,
-                "location_id": new_manifest.location_id,
-                "scheduled_ship_time": new_manifest.scheduled_ship_time,
-                "expected_receive_time": new_manifest.expected_receive_time,
-                "contact_id": new_manifest.contact_id,
-                "notes": new_manifest.notes,
+                "manifest_id": manifest.manifest_id,
+                "shipper_id": manifest.shipper_id,
+                "scheduled_ship_time": manifest.scheduled_ship_time,
+                "expected_receive_time": manifest.expected_receive_time,
+                "notes": manifest.notes,
             }
         }
     except Exception as e:
         print("❌ Dropoff event failed:", e)
         return JSONResponse(status_code=500, content={"error": str(e)})
+
 
 UPLOAD_DIR = "uploads/pickup_photos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -685,7 +751,6 @@ async def get_shipper_routes(shipper_id: str):
             pe.driver_user_id AS pickup_user_id,
             pe.measured_weight_kg AS pickup_weight,
             
-            de.received_weight_kg,
             de.actual_receive_time AS dropoff_time,
             de.received_by_user_id  AS dropoff_contact,
             m.destination_contact_name AS contact_name,
@@ -699,14 +764,20 @@ async def get_shipper_routes(shipper_id: str):
             de.received_contact_name AS dropoff_contact,
             de.actual_receive_time AS dropoff_time,
             de.received_weight_kg,
+            pe.measured_weight_kg, 
+            de.received_weight_kg,
+            pe.actual_departure_at,
+            de.actual_receive_time,
+            (pe.measured_weight_kg - de.received_weight_kg) /
+            (TIMESTAMPDIFF(SECOND, pe.actual_departure_at, de.actual_receive_time) / 3600) AS evap_rate,
 
             CASE
                 WHEN pe.measured_weight_kg IS NOT NULL
                     AND de.received_weight_kg IS NOT NULL
-                    AND TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time) > 0
+                    AND (TIMESTAMPDIFF(SECOND, pe.actual_departure_at, de.actual_receive_time) / 3600) > 0
                 THEN
                     (pe.measured_weight_kg - de.received_weight_kg) /
-                    TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time)
+                    (TIMESTAMPDIFF(SECOND, pe.actual_departure_at, de.actual_receive_time) / 3600)
                 ELSE NULL
             END AS evaporation_rate_kg_per_hour,
 
