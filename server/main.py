@@ -590,19 +590,47 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 async def create_pickup_event(
     manifest_id: str = Form(...),
     measured_weight_kg: float = Form(...),
+    weight_type: str = Form(...),
     driver_user_id: int = Form(...),
     photo: UploadFile = File(...), 
     notes:  str = Form("")
 ):
     try:
+        # get manifest info for writing params to database
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)   
+
+        cursor.execute("""
+        SELECT 
+            sm.manifest_id,
+            sm.shipper_id,
+            sm.origin_location_id,
+            sm.destination_location_id,
+            sm.scheduled_ship_time,
+            sm.expected_receive_time,
+            sm.created_by_user_id,
+            CONCAT(origin.city, ', ', origin.state, ', ', origin.company_name, ' ', origin.company_address) AS origin,
+            CONCAT(dest.city, ', ', dest.state, ', ', dest.company_name, ' ', dest.company_address) AS destination
+        FROM shipping_manifest sm
+        LEFT JOIN locations origin ON sm.origin_location_id = origin.id
+        LEFT JOIN locations dest ON sm.destination_location_id = dest.id
+        WHERE sm.manifest_id = %s
+        """, (manifest_id,))
+        results = cursor.fetchall()
+        
+        origin_location_id = results[0]['origin_location_id']
+        origin = results[0]['origin']
+        destination_location_id = results[0]['destination_location_id']
+        destination = results[0]['destination']
+        
         # Generate unique filename with timestamp
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.utcnow()
         filename = f"{photo.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
 
         # Save file to disk
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(photo.file, buffer)
+        #with open(file_path, "wb") as buffer:
+        #    shutil.copyfileobj(photo.file, buffer)
 
         # Store pickup record in the database
         conn = get_connection()
@@ -616,19 +644,47 @@ async def create_pickup_event(
                 driver_user_id,
                 image_path,
                 notes,
+                created_at,
+                dev_current_time
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            manifest_id,
+            measured_weight_kg,
+            timestamp,  # weight_measured_atarture_at
+            timestamp, 
+            driver_user_id,
+            file_path,
+            notes,
+            timestamp, 
+            timestamp
+        ))
+        conn.commit()
+
+        # store data in container_weight_event as well
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO container_weight_event (
+                manifest_id,
+                weight_type,
+                event_time,
+                location_id,
+                recorded_by_user_id,
+                weight_kg,
+                notes,
                 created_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             manifest_id,
-            measured_weight_kg,
-            datetime.utcnow(),  # weight_measured_atarture_at
-            datetime.utcnow(), 
+            weight_type,
+            timestamp,  # weight_measured_atarture_at
+            origin_location_id, 
             driver_user_id,
-            filename,
+            measured_weight_kg,
             notes,
-            datetime.utcnow(), 
+            timestamp
         ))
-        conn.commit()
+        conn.commit()       
+
 
         return {"status": "Pickup event created."}
 
@@ -919,7 +975,7 @@ async def ask_ai(request: Request):
         "shipper_id", "manifest_id", "origin", "origin_contact",
         "destination", "destination_contact", "pickup_time", "dropoff_time",
         "pickup_weight", "dropoff_weight", "evaporation_rate",
-        "scheduled_ship_time", "expected_receive_time", "summary_text"
+        "scheduled_ship_time", "expected_receive_time", "summary_text", "evaporation_rate"
     ]
 
     # Parse filter conditions
