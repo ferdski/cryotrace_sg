@@ -35,11 +35,11 @@ function RenderTransitShipperTableDate({ records }) {
               <td>{record.shipper_id}</td>
               <td>{record.origin}</td>
               <td>{record.scheduled_ship_time}</td>
-              <td>{record.pickup_contact}</td>  
+              <td>{record.pickup_contact_name}</td>  
               <td>{parseFloat(record.pickup_weight).toFixed(1)}</td>              
               <td>{new Date(record.dropoff_time).toLocaleString()}</td>
               <td>{record.destination}</td>
-              <td>{record.dropoff_contact}</td>
+              <td>{record.dropoff_contact_name}</td>
               <td>{parseFloat(record.dropoff_weight).toFixed(1)}</td>
               <td>{record.dropoff_user_id}</td>
               <td>{record.dropoff_notes}</td>

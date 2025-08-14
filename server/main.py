@@ -196,74 +196,54 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
         SELECT
             m.manifest_id,
             m.shipper_id,
-            CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ',  lp.state) as origin, 
-            CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) as destination,
+
+            CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ', lp.state) AS origin,
+            CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) AS destination,
+
             m.scheduled_ship_time,
             m.expected_receive_time,
             m.created_at,
 
-            m.origin_contact_name AS pickup_contact,            
+            m.origin_contact_name AS pickup_contact_name,
             pe.actual_departure_at AS pickup_time,
-            pe.driver_user_id AS pickup_user_id,
+            pe.driver_user_id     AS pickup_user_id,
             pe.measured_weight_kg AS pickup_weight,
-            
-            de.received_weight_kg,
-            
+
             de.actual_receive_time AS dropoff_time,
-            de.received_by_user_id  AS dropoff_contact,
-            m.destination_contact_name AS contact_name,
-            m.notes AS dropoff_notes,
-
-            lp.company_name,
-            lp.company_address,
-            lp.city,
-            lp.state,
-
             de.received_by_user_id AS dropoff_user_id,
-            de.received_contact_name AS dropoff_contact,
-            de.actual_receive_time AS dropoff_time,
-            de.received_weight_kg AS dropoff_weight,
-
+            de.received_contact_name AS dropoff_contact_name,
+            de.received_weight_kg  AS dropoff_weight,
 
             CASE
                 WHEN pe.measured_weight_kg IS NOT NULL
-                    AND de.received_weight_kg IS NOT NULL
-                    AND TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time) > 0
+                AND de.received_weight_kg IS NOT NULL
+                AND TIMESTAMPDIFF(SECOND, pe.actual_departure_at, de.actual_receive_time) > 0
                 THEN
-                    (pe.measured_weight_kg - de.received_weight_kg) /
-                    TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time)
+                (pe.measured_weight_kg - de.received_weight_kg) /
+                (TIMESTAMPDIFF(SECOND, pe.actual_departure_at, de.actual_receive_time) / 3600)
                 ELSE NULL
             END AS evaporation_rate_kg_per_hour,
 
+            lp.company_name    AS origin_company_name,
+            lp.company_address AS origin_company_address,
+            lp.city            AS origin_city,
+            lp.state           AS origin_state,
 
-            ld.company_name,
-            ld.company_address,
-            ld.city,
-            ld.state            
-
+            ld.company_name    AS dest_company_name,
+            ld.company_address AS dest_company_address,
+            ld.city            AS dest_city,
+            ld.state           AS dest_state
 
             FROM shipping_manifest m
-
-            LEFT JOIN pickup_event pe 
-                ON m.manifest_id = pe.manifest_id
-
-            LEFT JOIN dropoff_event de 
-                ON m.manifest_id = de.manifest_id
-
-            LEFT JOIN container_weight_event cw_pickup 
-                ON m.manifest_id = cw_pickup.manifest_id AND cw_pickup.weight_type = 'pickup'
-
-            LEFT JOIN container_weight_event cw_dropoff 
-                ON m.manifest_id = cw_dropoff.manifest_id AND cw_dropoff.weight_type = 'dropoff'
-
-            LEFT JOIN locations lp 
-                ON cw_pickup.location_id = lp.id
-
-            LEFT JOIN locations ld 
-                ON cw_dropoff.location_id = ld.id
-
+            LEFT JOIN pickup_event pe  ON m.manifest_id = pe.manifest_id
+            LEFT JOIN dropoff_event de ON m.manifest_id = de.manifest_id
+            LEFT JOIN container_weight_event cw_pickup  ON m.manifest_id = cw_pickup.manifest_id  AND cw_pickup.weight_type='pickup'
+            LEFT JOIN container_weight_event cw_dropoff ON m.manifest_id = cw_dropoff.manifest_id AND cw_dropoff.weight_type='dropoff'
+            LEFT JOIN locations lp ON cw_pickup.location_id = lp.id
+            LEFT JOIN locations ld ON cw_dropoff.location_id = ld.id
             WHERE m.shipper_id = %s
-            ORDER BY pickup_time DESC
+            ORDER BY pickup_time DESC;
+
 
     """, (shipperId,))
     elif filter == "manifestid" and shipperId:
@@ -296,73 +276,53 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
         SELECT
             m.manifest_id,
             m.shipper_id,
-            CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ',  lp.state) as origin, 
-            CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) as destination,
+
+            CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ', lp.state) AS origin,
+            CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) AS destination,
+
             m.scheduled_ship_time,
             m.expected_receive_time,
             m.created_at,
-            m.projected_weight_kg,
-            m.origin_contact_name AS pickup_contact,            
+
+            m.origin_contact_name AS pickup_contact_name,
             pe.actual_departure_at AS pickup_time,
-            pe.driver_user_id AS pickup_user_id,
+            pe.driver_user_id     AS pickup_user_id,
             pe.measured_weight_kg AS pickup_weight,
-            
-            de.received_weight_kg,
-            
+
             de.actual_receive_time AS dropoff_time,
-            de.received_by_user_id  AS dropoff_contact,
-            m.destination_contact_name AS contact_name,
-            m.notes AS dropoff_notes,
-
-            lp.company_name,
-            lp.company_address,
-            lp.city,
-            lp.state,
-
             de.received_by_user_id AS dropoff_user_id,
-            de.received_contact_name AS dropoff_contact,
-            de.actual_receive_time AS dropoff_time,
-            de.received_weight_kg AS dropoff_weight,
+            de.received_contact_name AS dropoff_contact_name,
+            de.received_weight_kg  AS dropoff_weight,
 
             CASE
                 WHEN pe.measured_weight_kg IS NOT NULL
-                    AND de.received_weight_kg IS NOT NULL
-                    AND TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time) > 0
+                AND de.received_weight_kg IS NOT NULL
+                AND TIMESTAMPDIFF(SECOND, pe.actual_departure_at, de.actual_receive_time) > 0
                 THEN
-                    (pe.measured_weight_kg - de.received_weight_kg) /
-                    TIMESTAMPDIFF(HOUR, pe.actual_departure_at, de.actual_receive_time)
+                (pe.measured_weight_kg - de.received_weight_kg) /
+                (TIMESTAMPDIFF(SECOND, pe.actual_departure_at, de.actual_receive_time) / 3600)
                 ELSE NULL
             END AS evaporation_rate_kg_per_hour,
 
+            lp.company_name    AS origin_company_name,
+            lp.company_address AS origin_company_address,
+            lp.city            AS origin_city,
+            lp.state           AS origin_state,
 
-            ld.company_name,
-            ld.company_address,
-            ld.city,
-            ld.state            
-
+            ld.company_name    AS dest_company_name,
+            ld.company_address AS dest_company_address,
+            ld.city            AS dest_city,
+            ld.state           AS dest_state
 
             FROM shipping_manifest m
-
-            LEFT JOIN pickup_event pe 
-                ON m.manifest_id = pe.manifest_id
-
-            LEFT JOIN dropoff_event de 
-                ON m.manifest_id = de.manifest_id
-
-            LEFT JOIN container_weight_event cw_pickup 
-                ON m.manifest_id = cw_pickup.manifest_id AND cw_pickup.weight_type = 'pickup'
-
-            LEFT JOIN container_weight_event cw_dropoff 
-                ON m.manifest_id = cw_dropoff.manifest_id AND cw_dropoff.weight_type = 'dropoff'
-
-            LEFT JOIN locations lp 
-                ON cw_pickup.location_id = lp.id
-
-            LEFT JOIN locations ld 
-                ON cw_dropoff.location_id = ld.id
-
+            LEFT JOIN pickup_event pe  ON m.manifest_id = pe.manifest_id
+            LEFT JOIN dropoff_event de ON m.manifest_id = de.manifest_id
+            LEFT JOIN container_weight_event cw_pickup  ON m.manifest_id = cw_pickup.manifest_id  AND cw_pickup.weight_type='pickup'
+            LEFT JOIN container_weight_event cw_dropoff ON m.manifest_id = cw_dropoff.manifest_id AND cw_dropoff.weight_type='dropoff'
+            LEFT JOIN locations lp ON cw_pickup.location_id = lp.id
+            LEFT JOIN locations ld ON cw_dropoff.location_id = ld.id
             WHERE m.shipper_id = %s
-            ORDER BY pickup_time DESC
+            ORDER BY pickup_time DESC;
 
         """, (shipperId,))
 
@@ -390,7 +350,10 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
         print("Error in query in api/records")
 
     results = cursor.fetchall()
-    print(f"query results: {results}")
+    print(f"query results: {results[0]['destination']}")
+    '''print("dest: ", results[1]['dest_company_name'],  results[0]['dest_company_address'],
+            results[0]['dest_city'],
+            results[0]['dest_state'])'''
     cursor.close()
     conn.close()
     return results
@@ -633,8 +596,7 @@ async def create_pickup_event(
         #    shutil.copyfileobj(photo.file, buffer)
 
         # Store pickup record in the database
-        conn = get_connection()
-        cursor = conn.cursor()
+
         cursor.execute("""
             INSERT INTO pickup_event (
                 manifest_id,
@@ -710,30 +672,89 @@ async def create_dropoff_event(
         received_contact_name: str = Form(""),
         received_weight_kg: str = Form(...),  
         condition_notes: str = Form(...),
+        weight_type: str = Form(...),  
         image_path: UploadFile = File(...),
         received_by_user_id: str = Form(...)
     ):
 
     try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)   
+
+        cursor.execute("""
+        SELECT 
+            sm.manifest_id,
+            sm.shipper_id,
+            sm.origin_location_id,
+            sm.destination_location_id,
+            sm.scheduled_ship_time,
+            sm.expected_receive_time,
+            sm.created_by_user_id,
+            CONCAT(origin.city, ', ', origin.state, ', ', origin.company_name, ' ', origin.company_address) AS origin,
+            CONCAT(dest.city, ', ', dest.state, ', ', dest.company_name, ' ', dest.company_address) AS destination
+        FROM shipping_manifest sm
+        LEFT JOIN locations origin ON sm.origin_location_id = origin.id
+        LEFT JOIN locations dest ON sm.destination_location_id = dest.id
+        WHERE sm.manifest_id = %s
+        """, (manifest_id,))
+        results = cursor.fetchall()
+        
+        origin_location_id = results[0]['origin_location_id']
+        origin = results[0]['origin']
+        destination_location_id = results[0]['destination_location_id']
+        destination = results[0]['destination']
+
+        # Generate unique filename with timestamp
+        timestamp = datetime.utcnow()
+        #filename = f"{photo.filename}"
+        file_path = image_path
+
         UPLOAD_DIR = "uploads/dropoff_photos"
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         # Save the uploaded photo
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.utcnow()
         filename = f"{manifest_id}_{timestamp}_{image_path.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
 
         #with open(file_path, "wb") as buffer:
         #    shutil.copyfileobj(image_path.file, buffer)
-        conn = get_connection()
-        cursor = conn.cursor()
 
         # 🚨 Validation: check against manifest destination
+
         cursor.execute("""
             SELECT origin_location_id FROM shipping_manifest
             WHERE manifest_id = %s
         """, (manifest_id,))
-        manifest_location_id = cursor.fetchone()[0]
 
+        results = cursor.fetchall()
+
+
+                # store data in container_weight_event as well
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO container_weight_event (
+                manifest_id,
+                weight_type,
+                event_time,
+                location_id,
+                recorded_by_user_id,
+                weight_kg,
+                notes,
+                created_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            manifest_id,
+            weight_type,
+            timestamp,  # weight_measured_atarture_at
+            received_location_id, 
+            received_by_user_id,
+            received_weight_kg,
+            '',
+            timestamp
+        ))
+        conn.commit()       
+
+        manifest_location_id = results[0]['origin_location_id']
         if not manifest_location_id:
             return JSONResponse(status_code=404, content={"error": "Manifest not found"})
 
@@ -753,13 +774,14 @@ async def create_dropoff_event(
                 manifest_id,
                 received_location_id,
                 received_contact_name,
-                actual_receive_time,
+                actual_receive_time,k
                 received_weight_kg,
                 condition_notes,
                 image_path,
                 received_by_user_id,
-                created_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                created_at,
+                dev_current_time 
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             manifest_id,
             received_location_id,
@@ -770,6 +792,7 @@ async def create_dropoff_event(
             filename,
             received_by_user_id,
             actual_receive_dt,
+            actual_receive_dt
         ))
         conn.commit()
         cursor.close()
