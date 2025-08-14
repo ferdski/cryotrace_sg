@@ -19,7 +19,7 @@ const DropoffEventsPage: React.FC = () => {
   const [selectedManifestId, setSelectedManifestId] = useState('');
   const [selectedManifest, setSelectedManifest] = useState<Manifest | null>(null);
   const [weight, setWeight] = useState<number | ''>('');
-  const [weightType, setWeightType] = useState('kg');
+  const [weightType, setWeightType] = useState('dropoff');
   const [photo, setPhoto] = useState<File | null>(null);
   const [notes, setNotes] = useState('');
   const [driverUserId, setDriverUserId] = useState<number | ''>('');
@@ -53,6 +53,7 @@ const DropoffEventsPage: React.FC = () => {
     formData.append('received_weight_kg', String(weight));
     formData.append('condition_notes', notes);
     formData.append('image_path', photo);
+    formData.append('weight_type', String(weightType)); 
     formData.append('received_by_user_id', String(driverUserId));
 
     // This field sends the manifest's destination ID or placeholder
@@ -136,8 +137,8 @@ const DropoffEventsPage: React.FC = () => {
         <label>
           Weight Type:
           <select value={weightType} onChange={e => setWeightType(e.target.value)}>
-            <option value="kg">kg</option>
-            <option value="lbs">lbs</option>
+            <option value="dropoff">dropoff</option>
+            <option value="interim">interim</option>
           </select>
         </label>
 
