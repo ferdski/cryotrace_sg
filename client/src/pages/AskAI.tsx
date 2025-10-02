@@ -4,7 +4,7 @@ import axios from 'axios';
 import styles from './AskAI.module.css';
 
 const AskAIPage: React.FC = () => {
-  const [shipperId, setShipperId] = useState('');
+  const [shipperId, setShipperId] = useState('shipper-ln2-20-0006');
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<any>(null);
   const [loading, setLoading] = useState(false);

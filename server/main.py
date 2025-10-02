@@ -276,7 +276,6 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
         SELECT
             m.manifest_id,
             m.shipper_id,
-
             CONCAT(lp.company_name, ', ', lp.company_address, ', ', lp.city, ', ', lp.state) AS origin,
             CONCAT(ld.company_name, ', ', ld.company_address, ', ', ld.city, ', ', ld.state) AS destination,
 
@@ -350,10 +349,13 @@ def get_records(filter: str = Query(None), shipperId: str = Query(None)):
         print("Error in query in api/records")
 
     results = cursor.fetchall()
-    print(f"query results: {results[0]['destination']}")
-    '''print("dest: ", results[1]['dest_company_name'],  results[0]['dest_company_address'],
-            results[0]['dest_city'],
-            results[0]['dest_state'])'''
+    if len(results) > 0:
+        print(f"query results: {results[0]['destination']}")
+        '''print("dest: ", results[1]['dest_company_name'],  results[0]['dest_company_address'],
+                results[0]['dest_city'],
+                results[0]['dest_state'])'''
+    else:
+        print("No results")
     cursor.close()
     conn.close()
     return results

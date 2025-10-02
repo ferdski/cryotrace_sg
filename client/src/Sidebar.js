@@ -10,7 +10,7 @@ function Sidebar() {
   <li><Link to="/users">Users</Link></li>
   <li><Link to="/containers">List of Shipper units</Link></li>
   <li><Link to="/manifests/">Manifests</Link></li>
-  <li><Link to="/create-manifest/">Create Manifest</Link></li>
+  
   <li>
     <span>Shippers by Manifest</span>
     <ul className="submenu">
@@ -27,6 +27,7 @@ function Sidebar() {
     </ul>    
     <span>Events</span>
     <ul className="submenu">
+      <li><Link to="/create-manifest/">Create Manifest</Link></li>
       <li><NavLink to="/events/pickup-events" activeClassName="active">Create Pickup Event</NavLink></li>
       <li><NavLink to="/events/dropoff-events" activeClassName="active">Create Dropoff Event</NavLink></li>
     </ul>
