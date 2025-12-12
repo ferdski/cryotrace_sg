@@ -12,6 +12,7 @@ function Sidebar() {
   <li><Link to="/manifests/">Manifests</Link></li>
   <li><Link to="/create-manifest/">Create Manifest</Link></li>
   <li>
+    <span><Link to="">View Preparations</Link></span>
     <span>Shippers by Manifest</span>
     <ul className="submenu">
       <li><Link to="/manifests/manifest_id">By Manifest Id</Link></li>      
@@ -23,7 +24,7 @@ function Sidebar() {
       <li><Link to="/transit/pickup-date">By pickup date</Link></li>
       <li><Link to="/transit/pickup-location">By pickup location</Link></li>
       <li><Link to="/transit/dropoff-date">By dropoff date</Link></li>
-      <li><Link to="/transit/dropoff-location">By dropoff location</Link></li>
+     {/* <li><Link to="/transit/dropoff-location">By dropoff location</Link></li>*/}
     </ul>    
     <span>Events</span>
     <ul className="submenu">

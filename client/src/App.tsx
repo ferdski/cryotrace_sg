@@ -19,6 +19,7 @@ import ShipperRoutesPage from './pages/ShipperRoutesPage';
 import EvaporationRatePage from './pages/EvaporationRatePage';
 import AskAiPage from './pages/AskAI';
 import ManifestCreate from './pages/ManifestCreatePage';
+import PreparationRecords from './pages/PreparationsPage';
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
         <Sidebar />
         <div className="content">
           <Routes>
+            <Route path="" element={<PreparationRecords/>} />
             <Route path="/users" element={<UsersList />} />
             <Route path="/containers" element={<ContainersList />} />
               <Route path="/manifests/manifest_id" element={<RecordsByManifestId />} />

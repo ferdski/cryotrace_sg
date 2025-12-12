@@ -414,6 +414,20 @@ def get_manifests(filter: str = Query(None), manifestId: str = Query(None)):
     conn.close()
     return results
 
+@api.get("/api/preparations")
+def get_preparations():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("Select * FROM preparations;")
+
+    results = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return results
+
+
+
 class ManifestCreateRequest(BaseModel):
     manifest_id: str
     shipper_id: str
