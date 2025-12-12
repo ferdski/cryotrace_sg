@@ -78,4 +78,4 @@ function PreparationRecords() {
   );
 }
 
-export default PreparationsList;
+export default PreparationRecords;
