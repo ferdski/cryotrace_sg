@@ -414,19 +414,24 @@ def get_manifests(filter: str = Query(None), manifestId: str = Query(None)):
     conn.close()
     return results
 
-@api.get("/api/preparations")
-def get_preparations():
+@app.get("/api/preparations")
+def get_preparations(shipperId: str = Query(None)):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("Select * FROM preparations;")
+    if shipperId==None:
+        cursor.execute("Select shipper_id FROM preparations;")
+
+    else:
+        cursor.execute("Select * FROM preparations where shipper_id=%s;", (shipperId,))
 
     results = cursor.fetchall()
     cursor.close()
     conn.close()
     return results
 
-
+#@app.get("/api/measurements")
+#def get_measurements(prep_id):
 
 class ManifestCreateRequest(BaseModel):
     manifest_id: str

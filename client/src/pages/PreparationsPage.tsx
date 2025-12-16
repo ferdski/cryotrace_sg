@@ -3,53 +3,54 @@ import '../components/ContainersList.css';  // use same CSS for pickup and dropo
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
 function PreparationRecords() {
-  const [preps, setPreps] = useState([]);
-  const [selectedPrepId, setSelectedPrepId] = useState("");
-  const [selectedPrep, setSelectedPrep] = useState(null);
-  const [shippers, setShippers] = useState([]);
-  const [selectedShipper, setSelectedShipper] = useState(null);
+const [shippers, setShippers] = useState([]);
+const [selectedShipperId, setSelectedShipperId] = useState("");
+const [preps, setPreps] = useState([]);
+
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
-  const fullUrl = `${baseUrl}/api/preparations`;
-
-  useEffect(() => {
-    fetch(fullUrl)
-      .then((res) => res.json())
-      .then((data) => setPreps(data))
-      .catch((err) => console.error("Error fetching preparations:", err));
-  }, []);
+  const fullUrl_preps = `${baseUrl}/api/preparations`;
+  //const fullUrl_shippers = `${baseUrl}/api/shippers`;
+  
+useEffect(() => {
+  fetch(`${baseUrl}/api/preparations`)
+    .then(res => res.json())
+    .then(data => setShippers(data))
+    .catch(err => console.error(err));
+}, []);
 
   // When user selects one preparation
-  useEffect(() => {
-    if (!selectedPrepId) {
-      setSelectedPrep(null);
-      return;
-    }
-    const found = preps.find((p) => p.id === selectedPrepId);
-    setSelectedPrep(found || null);
-  }, [selectedPrepId, preps]);
+useEffect(() => {
+  if (!selectedShipperId) {
+    setPreps([]);
+    return;
+  }
+
+  fetch(`${baseUrl}/api/preparations?shipperId=${selectedShipperId}`)
+    .then(res => res.json())
+    .then(data => setPreps(data))
+    .catch(err => console.error(err));
+}, [selectedShipperId]);
 
   return (
     <div className="containers-list">
       <h2>Preparations</h2>
 
       <label>
-        Select Preparation:
+        Select Shipper:
         <select
-          value={selectedPrepId}
-          onChange={(e) => setSelectedPrepId(e.target.value)}
-          required
-        >
-          <option value="">Choose a preparation</option>
-          {preps.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.id}
-            </option>
-          ))}
-        </select>
+        value={selectedShipperId}
+        onChange={(e) => setSelectedShipperId(e.target.value)}>
+        <option value="">Choose a Shipper</option>
+        {shippers.map(s => (
+          <option key={s.shipper_id} value={s.shipper_id}>
+            {s.shipper_id}
+          </option>
+      ))}
+      </select>
       </label>
 
-      {selectedPrep && (
+      {preps.length > 0 && (
         <div className="containers-list">
         <table>
             <thead>
