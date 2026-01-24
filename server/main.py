@@ -18,6 +18,9 @@ import shutil
 from openai import OpenAI
 from openai.resources.embeddings import Embeddings
 import weaviate
+import create_weaviate_schema
+from create_weaviate_schema import ensure_schema
+
 from dotenv import load_dotenv
 from utils import format_shipments_for_prompt, format_shipments_brief, compute_evaporation_volume
 
@@ -27,9 +30,32 @@ load_dotenv()
 
 # Initialize clients
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-weaviate_client = weaviate.Client("http://localhost:8080")
+# version for running w/o Docker
+#weaviate_client = weaviate.Client("http://localhost:8080")
+
+# version for running with Docker
+WEAVIATE_URL = os.getenv("WEAVIATE_URL", "http://weaviate:8080")
+weaviate_client = weaviate.Client(WEAVIATE_URL)
 
 app = FastAPI()
+
+@app.on_event("startup")
+def init_weaviate():
+    print("initiate weaviate")
+    url = os.getenv("WEAVIATE_URL", "http://weaviate:8080")
+    client = weaviate.Client(url)
+
+    # optional: simple retry loop for container startup ordering
+    for i in range(20):
+        try:
+            client.schema.get()
+            break
+        except Exception:
+            time.sleep(1)
+
+    print("Calling ensure schema")
+    ensure_schema()  # idempotent create-if-missing
+
 
 # Allow React frontend to call this API
 app.add_middleware(
@@ -84,30 +110,44 @@ def build_hybrid_query(weaviate_client, field_list: list, embedding: list, filte
         .with_where(filters) \
         .with_limit(50)
 
+METRIC_TERMS = {
+    "evaporation", "rate", "average", "avg", "mean", "median",
+    "min", "max", "total", "count", "sum", "percent", "percentage",
+    "trend", "over time", "highest", "lowest", "longest", "shortest"
+}
+
+FILTER_HINTS = {
+    "greater than", "less than", "more than", "before", "after", "between",
+    "on", "since", "during", "from", "to", "in ",  # light date/range hints
+}
+
+SEMANTIC_TERMS = {
+    "why", "explain", "summarize", "describe", "notes", "issue", "problem",
+    "mention", "similar", "related"
+}
+
 def determine_query_mode(question: str) -> str:
-    """
-    Decide if the user question should be handled via:
-    - 'filter': structured where-clause
-    - 'semantic': vector similarity
-    - 'hybrid': combine both
-    """
-    question = question.lower()
+    q = question.lower()
 
-    # Structured identifiers
-    if re.search(r"shipper-ln2-\d{2}-\d{4}", question):
+    # Strong structured identifiers -> filter
+    if re.search(r"shipper-ln2-\d{2}-\d{4}", q):
         return "filter"
-    if "manifest id" in question or re.search(r"man-\d{6}", question, re.IGNORECASE):
+    if "manifest id" in q or re.search(r"\bman-\d{6}\b", q):
         return "filter"
 
-    # Numeric or time-based filtering
-    if any(term in question for term in ["greater than", "less than", "more than", "before", "after", "between"]):
+    # Numeric/time comparisons -> filter
+    if any(t in q for t in FILTER_HINTS):
         return "filter"
 
-    # Location or contact-based semantics + inference
-    if any(term in question for term in ["who", "which", "where", "longest", "shortest", "evaporation", "contact", "trip"]):
+    # Analytics/metrics (evaporation rate, longest trip, etc.) -> hybrid
+    # Because you typically need filtering + aggregation/sort.
+    if any(t in q for t in METRIC_TERMS):
+        return "hybrid"
+
+    # Truly fuzzy/inference questions -> semantic
+    if any(t in q for t in SEMANTIC_TERMS) or any(t in q for t in ["who", "which", "where"]):
         return "semantic"
 
-    # Fallback to hybrid if ambiguous
     return "hybrid"
 
 
@@ -992,7 +1032,7 @@ async def ask_ai(request: Request):
         return {"error": "Missing 'prompt' or 'shipper_id'"}
 
     # Initialize clients
-    weaviate_client = weaviate.Client("http://localhost:8080")
+    client = weaviate.Client(os.getenv("WEAVIATE_URL"))
     openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     # Fields to retrieve
@@ -1016,6 +1056,14 @@ async def ask_ai(request: Request):
     # Determine query mode
     mode = determine_query_mode(question)
     print("🔍 Query mode:", mode)
+
+    '''results = (
+        weaviate_client.query
+        .get("Shipment", fields)
+        .with_limit(5)
+        .do()
+    )
+    print(results) '''
 
     # Run query
     if mode == "filter":

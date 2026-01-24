@@ -1,7 +1,8 @@
 import weaviate
 
-client = weaviate.Client("http://localhost:8080")  # Replace with your real URL
-
+#client = weaviate.Client("http://localhost:8080")  # Replace with your real URL
+#client = weaviate.Client("http://localhost:8080")  # non-Docker version
+client = weaviate.Client("http://weaviate:8080") 
 response = client.query.get(
     "Shipment",  # Replace with your actual class name
     ["shipper_id", "pickup_time"]

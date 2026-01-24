@@ -4,7 +4,8 @@ import weaviate
 import uuid
 import hashlib
 
-client = weaviate.Client("http://localhost:8080")
+#client = weaviate.Client("http://localhost:8080")  # non-Docker version
+client = weaviate.Client("http://weaviate:8080") 
 
 
 
@@ -54,9 +55,10 @@ schema = {
 }
 
 
-# Check and create schema
-if not client.schema.contains(schema):
-    client.schema.create(schema)
-    print("✅ Weaviate schema created.")
-else:
-    print("✅ Weaviate schema already exists.")
+def ensure_schema():
+    # Check and create schema
+    if not client.schema.contains(schema):
+        client.schema.create(schema)
+        print("✅ Weaviate schema created.")
+    else:
+        print("✅ Weaviate schema already exists.")

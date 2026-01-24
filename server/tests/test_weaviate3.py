@@ -1,7 +1,8 @@
 import weaviate
 import json
 
-weaviate_client = weaviate.Client("http://localhost:8080")
+#weaviate_client = weaviate.Client("http://localhost:8080")
+weaviate_client = weaviate.Client("http://weaviate:8080")
 
 query = weaviate_client.query.get("Shipment", ["manifest_id", "pickup_time"]) \
     .with_where({

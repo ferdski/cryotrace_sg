@@ -1,6 +1,7 @@
 import weaviate
 
-weaviate_client = weaviate.Client("http://localhost:8080")
+#weaviate_client = weaviate.Client("http://localhost:8080")
+weaviate_client = weaviate.Client("http://weaviate:8080")
 
 
 def add_shipment_property(name: str, data_type: str, description: str = ""):

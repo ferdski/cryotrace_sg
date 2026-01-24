@@ -16,7 +16,8 @@ load_dotenv()
 openai_client: OpenAI = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Weaviate client (older syntax)
-weaviate_client = weaviate.Client("http://localhost:8080")
+#weaviate_client = weaviate.Client("http://localhost:8080")  # non-Docker version
+weaviate_client = weaviate.Client("http://weaviate:8080") 
 
 def to_rfc3339(dt) -> str:
     """

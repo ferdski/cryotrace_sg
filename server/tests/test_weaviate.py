@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 # Load env vars
 load_dotenv()
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-weaviate_client = weaviate.Client("http://localhost:8080")
+#weaviate_client = weaviate.Client("http://localhost:8080")  # non-Docker version
+weaviate_client = weaviate.Client("http://weaviate:8080") 
+
 
 # Step 1: Ask a question
 #question = "Describe the route and evaporation rate for shipper shipper-ln2-20-0007"
